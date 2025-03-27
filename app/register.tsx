@@ -3,18 +3,19 @@ import { styles } from "../constants/styles";
 import { useState } from "react";
 import { useFonts } from "expo-font";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import React from "react";
 
-export default function Index() {
+export default function register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [fontsLoaded] = useFonts({
     PressStart: require("../assets/fonts/PressStart2P-Regular.ttf"),
     Roboto: require("../assets/fonts/Roboto-Regular.ttf"),
   });
   const insets = useSafeAreaInsets();
-  const router = useRouter();
 
   return (
     <SafeAreaProvider style={styles.container}>
@@ -25,10 +26,7 @@ export default function Index() {
           <Text style={{ fontFamily: "Roboto" }}>Colab</Text>
           <Text>Iniciar sesión</Text>
           <Text>
-            ¿Aún no tienes una cuenta?{" "}
-            <Pressable onPress={() => router.push("register")}>
-      <Text style={{ color: "blue" }}>Registrate</Text>
-    </Pressable>
+            ¿Aún no tienes una cuenta? <Link href={"/"}>Registrate</Link>
           </Text>
           <View style={{ flexDirection: "row", gap: 10 }}>
             <Pressable
@@ -59,6 +57,8 @@ export default function Index() {
             </Pressable>
           </View>
           <View style={styles.separator} />
+          <TextInput style={styles.input} placeholder="Nombre" value={name} onChangeText={(text) => setName(text)} />
+          <TextInput style={styles.input} placeholder="Apellido" value={lastName} onChangeText={(text) => setLastName(text)} />
           <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={(text) => setEmail(text)} />
           <TextInput
             style={styles.input}
