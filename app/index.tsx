@@ -1,97 +1,117 @@
-import { Image, Pressable, StatusBar, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { styles } from "../constants/styles";
-import { useState } from "react";
-import { useFonts } from "expo-font";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
 import React from "react";
+import { BtnLoginGyF } from "@/components/BtnLoginGyF";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+const loginSchema = yup.object().shape({
+  email: yup.string().email("Correo inválido").required("El correo es obligatorio"),
+  password: yup.string().min(6, "Mínimo 6 caracteres").required("La contraseña es obligatoria"),
+});
 
 export default function Index() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fontsLoaded] = useFonts({
-    PressStart: require("../assets/fonts/PressStart2P-Regular.ttf"),
-    Roboto: require("../assets/fonts/Roboto-Regular.ttf"),
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm({
+    resolver: yupResolver(loginSchema),
   });
-  const insets = useSafeAreaInsets();
+
   const router = useRouter();
 
+  const onSubmit = async (data: { email: string; password: string }) => {
+    try {
+      const response = await fetch("https://example.com/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Error en la autenticación");
+      }
+
+      console.log("Login exitoso:", result);
+      router.dismissAll();
+      router.push("/(tabs)");
+    } catch (error) {
+      setError("root", { type: "manual", message: "Usuario o contraseña incorrectos" });
+    }
+  };
+
   return (
-    <SafeAreaProvider style={styles.container}>
-      <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        <StatusBar barStyle={"dark-content"} />
-        <View style={styles.container}>
-          <Text style={styles.verdeando}>Verdeando</Text>
-          <Text style={{ fontFamily: "Roboto" }}>Colab</Text>
-          <Text>Iniciar sesión</Text>
-          <Text>
-            ¿Aún no tienes una cuenta?{" "}
-            <Pressable onPress={() => router.push("register")}>
-      <Text style={{ color: "blue" }}>Registrate</Text>
-    </Pressable>
-          </Text>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <Pressable
-              style={{
-                width: 160,
-                height: 80,
-                justifyContent: "center",
-                alignItems: "center",
-                borderRadius: 10,
-                borderColor: "#D9D9D9",
-                borderWidth: 1,
-              }}
-            >
-              <Image source={require("@/assets/images/google-logo.png")} />
-            </Pressable>
-            <Pressable
-              style={{
-                width: 160,
-                height: 80,
-                justifyContent: "center",
-                alignItems: "center",
-                borderRadius: 10,
-                borderColor: "#D9D9D9",
-                borderWidth: 1,
-              }}
-            >
-              <Image source={require("@/assets/images/facebook-logo.png")} />
-            </Pressable>
-          </View>
-          <View style={styles.separator} />
-          <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={(text) => setEmail(text)} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={(text) => setPassword(text)}
-            secureTextEntry
-          />
-          <Text style={{ marginBottom: 10 }}>¿Has olvidado la contraseña?</Text>
-          <Pressable
-            style={({ pressed }) => [
-              styles.buttonText,
-              pressed && styles.buttonPressed, // Aplica el estilo cuando se presiona
-            ]}
-            onPress={() => {}}
-          >
-            <Text style={{ color: "white" }}>Ingresar</Text>
-          </Pressable>
-        </View>
+    <View style={styles.body}>
+      <View style={styles.container}>
+        <Text style={styles.verdeando}>Verdeando</Text>
+        <Text style={{ fontFamily: "Roboto" }}>Colab</Text>
+        <Text>Iniciar sesión</Text>
+        <Text>
+          ¿Aún no tienes una cuenta?
+          <Link style={styles.link} href={"/register"}>
+            Registrate
+          </Link>
+        </Text>
+        <BtnLoginGyF />
+        <View style={styles.separator} />
+
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                keyboardType="email-address"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+            </>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
+            </>
+          )}
+        />
+        {errors.root && <Text style={styles.error}>{errors.root.message}</Text>}
+        <Text style={{ marginBottom: 10 }}>¿Has olvidado la contraseña?</Text>
+
+        <Pressable
+          style={({ pressed }) => [styles.buttonText, pressed && styles.buttonPressed]}
+          onPress={handleSubmit(onSubmit)}
+        >
+          <Text style={{ color: "white" }}>Ingresar</Text>
+        </Pressable>
       </View>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: 10,
-          position: "absolute",
-          bottom: 0,
-        }}
-      >
+
+      <View style={styles.footer}>
         <Text>Verdeando 1.0.0</Text>
         <Text>Dodo Games</Text>
       </View>
-    </SafeAreaProvider>
+    </View>
   );
 }

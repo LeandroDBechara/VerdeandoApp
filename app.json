@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "VerdeandoApp",
-    "slug": "VerdeandoApp",
+    "name": "verdeandoApp",
+    "slug": "verdeandoapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/dodo-games-logo.png",
-    "scheme": "myapp",
+    "scheme": ["verdeandoapp","fb674819048296621"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.verdeando.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.verdeando.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/dodo-games-logo.png",
         "backgroundColor": "#ffffff"
@@ -36,6 +38,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "051543c8-14cd-469e-8097-21ca1e27d526"
+      }
+    },
+    "owner": "leodbechara"
   }
 }
