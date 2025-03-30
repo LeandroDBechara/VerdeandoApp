@@ -1,7 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { styles } from "../constants/styles";
 import { Link, useRouter } from "expo-router";
-import React from "react";
 import { BtnLoginGyF } from "@/components/BtnLoginGyF";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
