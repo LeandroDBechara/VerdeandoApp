@@ -1,73 +1,166 @@
-import { Image, Pressable, StatusBar, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { styles } from "../constants/styles";
-import { useState } from "react";
-import { useFonts } from "expo-font";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Link } from "expo-router";
-import React from "react";
+import { Link, useRouter } from "expo-router";
 import { BtnLoginGyF } from "@/components/BtnLoginGyF";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+const registerSchema = yup.object().shape({
+  fullname: yup.string().required("El nombre es obligatorio"),
+  username: yup.string().required("El nombre de usuario es obligatorio"),
+  email: yup.string().email("Correo inválido").required("El correo es obligatorio"),
+  password: yup.string().min(6, "Mínimo 6 caracteres").required("La contraseña es obligatoria"),
+  confirmPassword: yup.string().oneOf([yup.ref("password"), ""], "Las contraseñas no coinciden").required("La contraseña es obligatoria"),
+});
 
 export default function register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [fontsLoaded] = useFonts({
-    PressStart: require("../assets/fonts/PressStart2P-Regular.ttf"),
-    Roboto: require("../assets/fonts/Roboto-Regular.ttf"),
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm({
+    resolver: yupResolver(registerSchema),
   });
-  const insets = useSafeAreaInsets();
+
+  const router = useRouter();
+
+  const onSubmit = async (data: { fullname: string; username: string; email: string; password: string; confirmPassword: string }) => {
+    try {
+      const response = await fetch("https://example.com/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Error en la autenticación");
+      }
+
+      console.log("Login exitoso:", result);
+      router.dismissAll();
+      router.push("/(tabs)");
+    } catch (error: any) {
+      setError("root", { type: "manual", message: error.message });
+    }
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.body}>
       <View style={styles.container}>
         <Text style={styles.verdeando}>Verdeando</Text>
         <Text style={{ fontFamily: "Roboto" }}>Colab</Text>
-        <Text>Iniciar sesión</Text>
+        <Text>Registrate</Text>
         <Text>
-          ¿Aún no tienes una cuenta? <Link href={"/"}>Registrate</Link>
+          ¿Ya tienes una cuenta?
+          <Link style={styles.link} href={"/"}>
+            Inicia sesión
+          </Link>
         </Text>
         <BtnLoginGyF />
         <View style={styles.separator} />
-        <TextInput style={styles.input} placeholder="Nombre" value={name} onChangeText={(text) => setName(text)} />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Apellido"
-          value={lastName}
-          onChangeText={(text) => setLastName(text)}
+        <Controller
+          control={control}
+          name="fullname"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Fullname"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.fullname && <Text style={styles.error}>{errors.fullname.message}</Text>}
+            </>
+          )}
         />
 
-        <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={(text) => setEmail(text)} />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          secureTextEntry
+        <Controller
+          control={control}
+          name="username"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.username && <Text style={styles.error}>{errors.username.message}</Text>}
+            </>
+          )}
         />
-        <Text style={{ marginBottom: 10 }}>¿Has olvidado la contraseña?</Text>
+
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                keyboardType="email-address"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+            </>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
+            </>
+          )}
+        />
+        <Controller
+          control={control}
+          name="confirmPassword"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                secureTextEntry
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.confirmPassword && <Text style={styles.error}>{errors.confirmPassword.message}</Text>}
+            </>
+          )}
+        />
+        {errors.root && <Text style={styles.error}>{errors.root.message}</Text>}
+
         <Pressable
-          style={({ pressed }) => [
-            styles.buttonText,
-            pressed && styles.buttonPressed, // Aplica el estilo cuando se presiona
-          ]}
-          onPress={() => {}}
+          style={({ pressed }) => [styles.buttonText, pressed && styles.buttonPressed]}
+          onPress={handleSubmit(onSubmit)}
         >
-          <Text style={{ color: "white" }}>Ingresar</Text>
+          <Text style={{ color: "white" }}>Registrarse</Text>
         </Pressable>
       </View>
 
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: 10,
-          position: "absolute",
-          bottom: 0,
-        }}
-      >
+      <View style={styles.footer}>
         <Text>Verdeando 1.0.0</Text>
         <Text>Dodo Games</Text>
       </View>
