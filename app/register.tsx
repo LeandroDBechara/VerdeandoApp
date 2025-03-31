@@ -1,27 +1,34 @@
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Image, Pressable, StatusBar, Text, TextInput, View } from "react-native";
 import { styles } from "../constants/styles";
+import { useState } from "react";
+import { useFonts } from "expo-font";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
+import React from "react";
 import { BtnLoginGyF } from "@/components/BtnLoginGyF";
 import { useForm, Controller } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-const registerSchema = yup.object().shape({
-  fullname: yup.string().required("El nombre es obligatorio"),
-  username: yup.string().required("El nombre de usuario es obligatorio"),
-  email: yup.string().email("Correo inválido").required("El correo es obligatorio"),
-  password: yup.string().min(6, "Mínimo 6 caracteres").required("La contraseña es obligatoria"),
-  confirmPassword: yup.string().oneOf([yup.ref("password"), ""], "Las contraseñas no coinciden").required("La contraseña es obligatoria"),
-});
+const registerSchema = z.object({
+  fullname: z.string().nonempty("El nombre es obligatorio"),
+  username: z.string().nonempty("El nombre de usuario es obligatorio"),
+  email: z.string().nonempty("El correo es obligatorio").email("Correo inválido"),
+  password: z.string().nonempty("La contraseña es obligatoria").min(6, "Mínimo 6 caracteres"),
+  confirmPassword: z.string().nonempty("La confirmación de contraseña es obligatoria").min(6, "Mínimo 6 caracteres")
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Las contrasenas no coinciden",
+    path: ["confirmPassword"],
+  })
 
-export default function register() {
+export default function Register() {
   const {
     control,
     handleSubmit,
     formState: { errors },
     setError,
   } = useForm({
-    resolver: yupResolver(registerSchema),
+    resolver: zodResolver(registerSchema),
   });
 
   const router = useRouter();
@@ -36,16 +43,16 @@ export default function register() {
         body: JSON.stringify(data),
       });
       const result = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(result.message || "Error en la autenticación");
+        throw new Error(result.message || "Error en el registro");
       }
-
-      console.log("Login exitoso:", result);
+      
+      console.log("Registro exitoso:", result);
       router.dismissAll();
       router.push("/(tabs)");
-    } catch (error: any) {
-      setError("root", { type: "manual", message: error.message });
+    } catch (error) {
+      setError("email", { type: "manual", message: "Error en el registro" });
     }
   };
 
@@ -133,6 +140,7 @@ export default function register() {
             </>
           )}
         />
+        
         <Controller
           control={control}
           name="confirmPassword"
@@ -150,7 +158,10 @@ export default function register() {
             </>
           )}
         />
-        {errors.root && <Text style={styles.error}>{errors.root.message}</Text>}
+
+        {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+        {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
+        <Text style={{ marginBottom: 10 }}>¿Has olvidado la contraseña?</Text>
 
         <Pressable
           style={({ pressed }) => [styles.buttonText, pressed && styles.buttonPressed]}
