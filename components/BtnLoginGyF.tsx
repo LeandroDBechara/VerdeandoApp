@@ -1,4 +1,4 @@
-import { Image, Pressable, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { styles } from "@/constants/styles";
 import { useEffect } from "react";
 import { router } from "expo-router";
@@ -6,18 +6,19 @@ import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
 
+
 WebBrowser.maybeCompleteAuthSession();
 export  function BtnLoginGyF() {
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: "28107125236-a44i9skkavnk850o5tob3s06i9ho7du4.apps.googleusercontent.com",
-    androidClientId: "28107125236-nv28u87rggjsak70n5kfdh7tmnarlkh7.apps.googleusercontent.com",
-    iosClientId: "28107125236-kv7f25she2vkoc6u3mdpd3am4tijji63.apps.googleusercontent.com",
+    clientId: process.env.EXPO_PUBLIC_WEB_CLIENT,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT,
     
   });
 
   const enviarToken = async (token:string) => {
     console.log(token);
-    router.replace("/(tabs)");
+    router.replace("/tabs");
   }
 
   useEffect(() => {

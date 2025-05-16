@@ -55,6 +55,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "white",
   },
   BtnLoginGyF: {
     width: 160,
