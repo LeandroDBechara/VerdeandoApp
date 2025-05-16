@@ -41,7 +41,7 @@ export default function Login() {
 
       console.log("Login exitoso:", result);
       router.dismissAll();
-      router.push("/(tabs)");
+      router.push("/tabs/intercambio");
     } catch (error) {
       setError("root", { type: "manual", message: "Usuario o contraseña incorrectos" });
     }

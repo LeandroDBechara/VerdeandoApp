@@ -4,8 +4,9 @@
     "slug": "verdeandoapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/dodo-games-logo.png",
-    "scheme": ["verdeandoapp","fb674819048296621"],
+    "icon": "./assets/images/White-Verdeando-logo.png",
+    "backgroundColor": "#90D26D",
+    "scheme": ["verdeandoapp", "fb674819048296621"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -15,38 +16,39 @@
     "android": {
       "package": "com.verdeando.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/dodo-games-logo.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/White-Verdeando-logo.png",
+        "backgroundColor": "#90D26D"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/dodo-games-logo.png"
+      "favicon": "./assets/images/White-Verdeando-logo.png",
+      "backgroundColor": "#90D26D"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "/assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#90D26D"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {
+    /*"extra": {
       "router": {
         "origin": false
       },
       "eas": {
         "projectId": "051543c8-14cd-469e-8097-21ca1e27d526"
       }
-    },
+    },*/
     "owner": "leodbechara"
   }
 }
