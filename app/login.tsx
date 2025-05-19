@@ -1,10 +1,11 @@
-import { Pressable, Text, TextInput, View } from "react-native";
-import { styles } from "../constants/styles";
+import { Pressable, Text, TextInput, View, Image, StyleSheet } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { BtnLoginGyF } from "@/components/BtnLoginGyF";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {z} from "zod";
+import React, { useState } from "react";
+import { Ionicons } from '@expo/vector-icons';
 
 const loginSchema = z.object({
     email: z.string().nonempty("El correo es obligatorio").email("Correo inválido"),
@@ -12,6 +13,7 @@ const loginSchema = z.object({
   });
 
 export default function Login() {
+    const [showPassword, setShowPassword] = useState(false);
 
     const {
         control,
@@ -41,7 +43,7 @@ export default function Login() {
 
       console.log("Login exitoso:", result);
       router.dismissAll();
-      router.push("/tabs/intercambio");
+      router.push("/(tabs)/intercambio");
     } catch (error) {
       setError("root", { type: "manual", message: "Usuario o contraseña incorrectos" });
     }
@@ -50,32 +52,27 @@ export default function Login() {
   return (
     <View style={styles.body}>
       <View style={styles.container}>
-        <Text style={styles.verdeando}>Verdeando</Text>
-        <Text style={{ fontFamily: "Roboto" }}>Colab</Text>
-        <Text>Iniciar sesión</Text>
-        <Text>
-          ¿Aún no tienes una cuenta?
-          <Link style={styles.link} href={"/register"}>
-            Registrate
-          </Link>
-        </Text>
+        <Image source={require("@/assets/images/logo.png")} />
+        <Text style={styles.title}>Iniciar sesión</Text> 
+        
         <BtnLoginGyF />
-        <View style={styles.separator} />
-
+       <View>
         <Controller
           control={control}
           name="email"
           render={({ field: { onChange, onBlur, value } }) => (
             <>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                keyboardType="email-address"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
-              {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+              <View style={styles.inputContainer}>
+                <Text style={styles.placeholder}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder=""
+                  keyboardType="email-address"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              </View>
             </>
           )}
         />
@@ -85,27 +82,48 @@ export default function Login() {
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
             <>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                secureTextEntry
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
-              {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
+              <View style={styles.inputContainer}>
+                <Text style={styles.placeholder}>Password</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    style={[styles.input]}
+                    placeholder=""
+                    secureTextEntry={!showPassword}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                  <Pressable
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: 10, top: 16 }}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye-off-outline" : "eye-outline"}
+                      size={24}
+                      color="lightgray"
+                    />
+                  </Pressable>
+                </View>
+              </View>
+              
             </>
           )}
         />
+        </View>
+        {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+        {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
         {errors.root && <Text style={styles.error}>{errors.root.message}</Text>}
-        <Text style={{ marginBottom: 10 }}>¿Has olvidado la contraseña?</Text>
 
         <Pressable
-          style={({ pressed }) => [styles.buttonText, pressed && styles.buttonPressed]}
+          style={({ pressed }) => [styles.buttonIngresar, pressed && styles.buttonPressed]}
           onPress={handleSubmit(onSubmit)}
         >
-          <Text style={{ color: "white" }}>Ingresar</Text>
+          <Text style={styles.buttonIngresarText}>Ingresar</Text>
         </Pressable>
+        <Text style={{ marginBottom: 10, marginTop: -15 }}>¿Olvidaste la contraseña?</Text>
+        <Text style={{ marginBottom: 20 }}>
+          ¿Aún no tienes una cuenta? <Link style={styles.link} href={"/register"}>Registrate aquí</Link>
+        </Text>
       </View>
 
       <View style={styles.footer}>
@@ -115,3 +133,79 @@ export default function Login() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "space-evenly",
+    alignItems: "center",
+  },
+  inputContainer: {
+    position: 'relative',
+    width: 300,
+    marginBottom: 10,
+  },
+  placeholder: {
+    position: 'absolute',
+    left: 10,
+    top: -10,
+    backgroundColor: 'white',
+    paddingHorizontal: 5,
+    color: '#929292',
+    zIndex: 1,
+  },
+  input: {
+    width: '100%',
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: "white",
+    borderColor: "#D9D9D9",
+    borderWidth: 1,
+    color: "#929292",
+    padding: 10,
+  },
+  buttonIngresar: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 300,
+    borderRadius: 20,
+    backgroundColor: "#2C7865",
+    paddingVertical: 11,
+  },
+  buttonIngresarText: {
+    color: "#D9EDBF",
+    fontSize: 20,
+    fontWeight: "medium",
+    fontFamily: "Noto Sans",
+  },
+  buttonPressed: {
+    opacity: 0.5,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    padding: 10,
+    bottom: 30,
+  },
+  link: {
+    color: "#11B11B",
+    textDecorationLine: "underline",
+  },
+  body: {
+    flex: 1,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  error: {
+    color: "red",
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    fontFamily: "Noto Sans",
+  },
+
+});

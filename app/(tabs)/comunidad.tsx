@@ -1,9 +1,9 @@
 import { Text, View } from "react-native";
 
-export default function Intercambio() {
+export default function Comunidad() {
     return (
         <View>
-            <Text>Intercambio</Text>
+            <Text>Comunidad</Text>
         </View>
     );
 }

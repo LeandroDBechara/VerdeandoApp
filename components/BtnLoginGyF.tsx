@@ -1,5 +1,4 @@
-import { Image, Pressable, Text, View } from "react-native";
-import { styles } from "@/constants/styles";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useEffect } from "react";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -18,7 +17,7 @@ export  function BtnLoginGyF() {
 
   const enviarToken = async (token:string) => {
     console.log(token);
-    router.replace("/tabs");
+    router.replace("/(tabs)");
   }
 
   useEffect(() => {
@@ -29,15 +28,30 @@ export  function BtnLoginGyF() {
 
 
   return (
-    <View style={{ flexDirection: "row", gap: 10 }}>
+    <View style={{ flexDirection: "column", gap: 10 }}>
       <Pressable 
       style={styles.BtnLoginGyF}
       onPress={() => promptAsync().catch((e) => {console.log("Error al inicialr sesion")})}>
-        <Image source={require("@/assets/images/google-logo.png")} />
+        <Image style={{marginRight: 15}} source={require("@/assets/images/google-logo.png")} />
+        <Text>Iniciar sesión con Google</Text>
       </Pressable>
       <Pressable style={styles.BtnLoginGyF}>
         <Image source={require("@/assets/images/facebook-logo.png")} />
+        <Text>Iniciar sesión con Facebook</Text>
       </Pressable>
     </View>
   );
 }
+export const styles = StyleSheet.create({
+  BtnLoginGyF: {
+    flexDirection: "row",
+    gap: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    borderColor: "#D9D9D9",
+    borderWidth: 1,
+    width: 300,
+    paddingVertical: 11,
+  },
+});
