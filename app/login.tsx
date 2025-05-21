@@ -43,7 +43,7 @@ export default function Login() {
 
       console.log("Login exitoso:", result);
       router.dismissAll();
-      router.push("/(tabs)/intercambio");
+      router.push("/(tabs)/intercambios");
     } catch (error) {
       setError("root", { type: "manual", message: "Usuario o contraseña incorrectos" });
     }
@@ -52,7 +52,7 @@ export default function Login() {
   return (
     <View style={styles.body}>
       <View style={styles.container}>
-        <Image source={require("@/assets/images/logo.png")} />
+        <Image source={require("@/assets/images/logoVerdeando.png")} resizeMode="contain" style={{ width: 240, height: 50 }} />
         <Text style={styles.title}>Iniciar sesión</Text> 
         
         <BtnLoginGyF />
@@ -187,7 +187,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
     padding: 10,
-    bottom: 30,
   },
   link: {
     color: "#11B11B",

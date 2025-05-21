@@ -1,7 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import React from "react";
 
-const tabs = ["Diario", "Semanal", "Mensual"];
+const tabs = ["Realizados", "Pendientes"];
 
 export default function StatsTabs({ activeTab, onTabChange }: { activeTab: string; onTabChange: (tab: string) => void }) {
   return (

@@ -13,7 +13,11 @@ export default function TabLayout() {
         tabBarActiveTintColor: "green",
         tabBarInactiveTintColor: "lightgray",
         tabBarActiveBackgroundColor: "lightgreen",
-
+        
+        tabBarLabelStyle:{
+          fontSize: 9.9,
+          fontWeight: "bold",
+        },
         tabBarStyle: Platform.select({
           ios: {
             position: "absolute",
@@ -22,7 +26,9 @@ export default function TabLayout() {
             position: "absolute",
             borderTopWidth: 1,
             borderTopColor: "lightgray",
-          }
+            height: 60,
+            paddingBottom: 0,
+          },
         }),
       }}
     >
@@ -39,14 +45,15 @@ export default function TabLayout() {
           title: "Puntos Verdes",
           tabBarIcon: ({ color }) => <FontAwesome6 name="location-dot" size={24} color={color} />,
           tabBarLabel: "Puntos Verdes",
+          headerShown:true,
         }}
       />
       <Tabs.Screen
-        name="intercambio"
+        name="intercambios"
         options={{
-          title: "Intercambio",
+          title: "Intercambios",
           tabBarIcon: ({ color }) => <FontAwesome6 name="arrows-rotate" size={24} color={color} />,
-          tabBarLabel: "Intercambio",
+          tabBarLabel: "Intercambios",
         }}
       />
             <Tabs.Screen

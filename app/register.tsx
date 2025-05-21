@@ -74,7 +74,7 @@ export default function Register() {
   return (
     <View style={styles.body}>
       <View style={styles.container}>
-        <Image source={require("@/assets/images/logo.png")} />
+        <Image source={require("@/assets/images/logoVerdeando.png")} resizeMode="contain" style={{ width: 240, height: 50 }} />
         <Text style={styles.title}>Crear cuenta</Text>
 
         <Controller
@@ -337,7 +337,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
     padding: 10,
-    bottom: 30,
   },
   link: {
     color: "#11B11B",
