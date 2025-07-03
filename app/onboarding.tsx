@@ -72,7 +72,7 @@ export default function Onboarding() {
               ))}
             </View>
             {item.button && (
-              <Pressable style={styles.button} onPress={() => router.push('/(tabs)')}>
+              <Pressable style={styles.button} onPress={() => router.push('/(tabs)/puntosverdes')}>
                 <Text style={styles.buttonText}>¡Estoy listo para reciclar!</Text>
               </Pressable>
             )}

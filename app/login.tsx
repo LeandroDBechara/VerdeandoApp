@@ -4,8 +4,9 @@ import { BtnLoginGyF } from "@/components/BtnLoginGyF";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {z} from "zod";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from "@/contexts/UserContext";
 
 const loginSchema = z.object({
     email: z.string().nonempty("El correo es obligatorio").email("Correo inválido"),
@@ -14,6 +15,14 @@ const loginSchema = z.object({
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
+    const { login, user } = useUser();
+    const router = useRouter();
+
+    useEffect(() => {
+      if (user) {
+        router.replace("/(tabs)");
+      }
+    }, [user]);
 
     const {
         control,
@@ -24,26 +33,10 @@ export default function Login() {
         resolver: zodResolver(loginSchema),
       });
 
-  const router = useRouter();
-
   const onSubmit = async (data: { email: string; password: string }) => {
     try {
-      const response = await fetch("https://example.com/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Error en la autenticación");
-      }
-
-      console.log("Login exitoso:", result);
-      router.dismissAll();
-      router.push("/(tabs)/intercambios");
+      await login(data);
+      router.replace("/(tabs)");
     } catch (error) {
       setError("root", { type: "manual", message: "Usuario o contraseña incorrectos" });
     }

@@ -7,15 +7,16 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "@/contexts/UserContext";
 
 const registerSchema = z
   .object({
-    name: z.string().nonempty("El nombre es obligatorio"),
-    fullname: z.string().nonempty("El nombre de usuario es obligatorio"),
+    nombre: z.string().nonempty("El nombre es obligatorio"),
+    apellido: z.string().nonempty("El apellido es obligatorio"),
     email: z.string().nonempty("El correo es obligatorio").email("Correo inválido"),
     password: z.string().nonempty("La contraseña es obligatoria").min(6, "Mínimo 6 caracteres"),
     confirmPassword: z.string().nonempty("La confirmación de contraseña es obligatoria"),
-    birthDate: z.string().nonempty("La fecha de nacimiento es obligatoria")
+    fechaDeNacimiento: z.string().nonempty("La fecha de nacimiento es obligatoria")
       .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Formato inválido (DD/MM/AAAA)"),
     termsAccepted: z.boolean().refine((val) => val === true, {
       message: "Debes aceptar los términos y condiciones",
@@ -41,33 +42,33 @@ export default function Register() {
   });
 
   const router = useRouter();
+  const user = useUser();
 
   const onSubmit = async (data: {
-    name: string;
-    fullname: string;
+    nombre: string;
+    apellido: string;
     email: string;
     password: string;
     confirmPassword: string;
+    fechaDeNacimiento: string;
   }) => {
     try {
-      const response = await fetch("https://example.com/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Error en el registro");
-      }
-
-      console.log("Registro exitoso:", result);
-      router.dismissAll();
-      router.push("/(tabs)");
+      const fecha = data.fechaDeNacimiento.split("/");
+      const fechaFormateada = `${fecha[0]}-${fecha[1]}-${fecha[2]}`;
+      
+      const registerData = {
+        nombre: data.nombre,
+        apellido: data.apellido,
+        email: data.email,
+        password: data.password,
+        fechaDeNacimiento: fechaFormateada,
+      };
+      
+      await user.register(registerData);
+      console.log("Registro exitoso");
+      router.push("/login");
     } catch (error) {
-      setError("email", { type: "manual", message: "Error en el registro" });
+      setError("root", { type: "manual", message: "Error en el registro" });
     }
   };
 
@@ -79,7 +80,7 @@ export default function Register() {
 
         <Controller
           control={control}
-          name="name"
+          name="nombre"
           render={({ field: { onChange, onBlur, value } }) => (
             <>
               <View style={styles.inputContainer}>
@@ -93,14 +94,14 @@ export default function Register() {
                   value={value}
                 />
               </View>
-              {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+              {errors.nombre && <Text style={styles.error}>{errors.nombre.message}</Text>}
             </>
           )}
         />
 
         <Controller
           control={control}
-          name="fullname"
+          name="apellido"
           render={({ field: { onChange, onBlur, value } }) => (
             <>
               <View style={styles.inputContainer}>
@@ -114,7 +115,7 @@ export default function Register() {
                   value={value}
                 />
               </View>
-              {errors.fullname && <Text style={styles.error}>{errors.fullname.message}</Text>}
+              {errors.apellido && <Text style={styles.error}>{errors.apellido.message}</Text>}
             </>
           )}
         />
@@ -143,7 +144,7 @@ export default function Register() {
 
         <Controller
           control={control}
-          name="birthDate"
+          name="fechaDeNacimiento"
           render={({ field: { onChange, onBlur, value } }) => (
             <>
               <View style={styles.inputContainer}>
@@ -175,7 +176,7 @@ export default function Register() {
                   </View>
                 </View>
               </View>
-              {errors.birthDate && <Text style={styles.error}>{errors.birthDate.message}</Text>}
+              {errors.fechaDeNacimiento && <Text style={styles.error}>{errors.fechaDeNacimiento.message}</Text>}
             </>
           )}
         />
@@ -239,6 +240,7 @@ export default function Register() {
             </>
           )}
         />
+        {errors.root && <Text style={styles.error}>{errors.root.message}</Text>}
         <View style={styles.termsContainer}>
           <Controller
             control={control}
@@ -253,7 +255,7 @@ export default function Register() {
             Acepto los{" "}
             <Link
               style={{ textDecorationLine: "underline", fontFamily: "Noto Sans", fontWeight: "bold" }}
-              href={"/login"}
+              href={"https://truthful-server-e64.notion.site/T-rminos-y-Condiciones-1fee6cc3299d804ab847df070366dc51"}
             >
               Términos y condiciones
             </Link>

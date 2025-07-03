@@ -1,9 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import React from "react";
 
-const tabs = ["Realizados", "Pendientes"];
-
-export default function StatsTabs({ activeTab, onTabChange }: { activeTab: string; onTabChange: (tab: string) => void }) {
+export default function StatsTabs({ activeTab, onTabChange, tabs }: { activeTab: string; onTabChange: (tab: string) => void, tabs: string[] }) {
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 10 }}>
       {tabs.map((tab) => (

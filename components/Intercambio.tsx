@@ -1,26 +1,52 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable, Modal } from "react-native";
 import BasuraTipos from "./BasuraTipos";
 import { FontAwesome6 } from "@expo/vector-icons";
+import  QRCode  from "react-native-qrcode-svg";
+import { Intercambio as IntercambioType } from "@/contexts/IntercambiosContext";
+import React, { useState } from "react";
 
-export default function Intercambio({ id, fecha, basura }: { id: string, fecha: string, basura: { key: string, icon: string, text: string }[] }) {
+export default function Intercambio({ intercambio }: { intercambio: IntercambioType }) {
+    const [modalVisible, setModalVisible] = useState(false);
     return (
-        <View style={styles.container}>
-            <View style={styles.content}>
-                <Text>Id intercambio: {id}</Text>
-                <Text>Fecha intercambio: {fecha}</Text>
+        <>
+        <Pressable style={styles.container} onPress={() => setModalVisible(true)}>
+            <View style={styles.content}>   
+                <Text>Id intercambio: {intercambio.id}</Text>
+                <Text>Fecha intercambio: {intercambio.fecha}</Text>
             
             <View style={styles.basuraContainer}>
-                {basura.map((item) => (
-                    <View key={item.key}>
-                    <BasuraTipos icon={item.icon} text={item.text} />
+                    {intercambio.detalleIntercambio.map((detalle) => (
+                    <View key={detalle.id}>
+                    <BasuraTipos key={detalle.residuo.id} residuo={detalle.residuo} selected={false} setSelected={() => {}} />
                     </View>
                 ))}
             </View>
             </View>
             <View style={styles.qrContainer}>
-                <FontAwesome6 name="spinner" size={24} color="lightgreen" />
+                <QRCode value={intercambio.token || ""} size={100} />
             </View>
-        </View>
+        </Pressable>
+        <Modal visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
+            <View style={styles.modalContainer}>
+                <QRCode value={intercambio.token || ""} size={300} />
+                <Text>Puntos totales: {intercambio.totalPuntos}</Text>
+                <Text>Fecha Creacion: {intercambio.fecha}</Text>
+                <Text>Fecha limite: {intercambio.fechaLimite}</Text>
+                <Text>Fecha realizado: {intercambio.fechaRealizado || "No realizado"}</Text>
+                <Text>Estado: {intercambio.estado}</Text>
+                <Text>Evento: {intercambio.evento?.titulo}</Text>
+                <Text>Punto verde: {intercambio.pesoTotal}</Text>
+                <View>
+                    {intercambio.detalleIntercambio.map((detalle) => (
+                        <View key={detalle.id}>
+                             <BasuraTipos key={detalle.residuo.id} residuo={detalle.residuo} selected={false} setSelected={() => {}} />
+                            <Text>{detalle.pesoGramos} gramos</Text>
+                        </View>
+                    ))}
+                </View>
+            </View>
+        </Modal>
+        </>
     );
 }
 
@@ -45,9 +71,16 @@ const styles = StyleSheet.create({
         justifyContent: "flex-start",
     },
     content: {
-        width: "80%",
+        width: "65%",
     },
     qrContainer: {
-        width: "20%",
+        width: "35%",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
     },
 });
