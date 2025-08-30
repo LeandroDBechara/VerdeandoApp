@@ -1,8 +1,8 @@
 import { useFonts } from "expo-font";
 import { router, SplashScreen, Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { PuntoVerdeProvider } from "@/contexts/PuntoVerdeContext";
 import { IntercambiosProvider } from "@/contexts/IntercambiosContext";
@@ -14,6 +14,7 @@ function RootLayoutNav() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useUser();
   const [menuVisible, setMenuVisible] = useState(false);
+  
   useEffect(() => {
     if (!user) {
       router.replace("/login");
@@ -47,38 +48,37 @@ function RootLayoutNav() {
 
   const handleConfiguracion = () => {
     setMenuVisible(false);
-    // Navegar a la pantalla de configuración
     router.push('/userconfig');
   };
 
   const handleCerrarSesion = () => {
     setMenuVisible(false);
-    // Aquí puedes agregar la lógica para cerrar sesión
     console.log("Cerrando sesión...");
-    // Navegar a la pantalla de login
     logout();
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>   
-      <Stack  screenOptions={{
+    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>   
+      <Stack screenOptions={{
         headerLeft: renderHeaderLeft,
         headerRight: renderHeaderRight,
         headerStyle: {
           backgroundColor: 'white'
         },
-        
         headerTitleStyle: {
           color: 'green',
           fontWeight: 'bold',
-        },  }}>  
+        },
+      }}>  
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="userconfig" options={{ headerShown: true, title: "Configuración",  }} />
+        <Stack.Screen name="userconfig" options={{ headerShown: true, title: "Configuración" }} />
+        <Stack.Screen name="recuperar" options={{ headerShown: false }} />
       </Stack>
+      
       {/* Modal del menú */}
       <Modal
         visible={menuVisible}
@@ -110,7 +110,7 @@ function RootLayoutNav() {
           </View>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -130,17 +130,19 @@ export default function RootLayout() {
   }
 
   return (
-    <UserProvider>
-      <PuntoVerdeProvider>
-        <IntercambiosProvider>
-          <EventoProvider>
-            <RecompensaProvider>
-              <RootLayoutNav />
-            </RecompensaProvider>
-          </EventoProvider>
-        </IntercambiosProvider>
-      </PuntoVerdeProvider>
-    </UserProvider>
+    <SafeAreaProvider>
+      <UserProvider>
+        <PuntoVerdeProvider>
+          <IntercambiosProvider>
+            <EventoProvider>
+              <RecompensaProvider>
+                <RootLayoutNav />
+              </RecompensaProvider>
+            </EventoProvider>
+          </IntercambiosProvider>
+        </PuntoVerdeProvider>
+      </UserProvider>
+    </SafeAreaProvider>
   );
 }
 const styles = StyleSheet.create({

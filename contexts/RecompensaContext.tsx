@@ -36,11 +36,15 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { user } = useUser();
 
   useEffect(() => {
-    getRecompensas();
-    getCanjes();
-  }, []);
+    if (user?.token) {
+      getRecompensas();
+      getCanjes();
+    }
+  }, [user?.token]);
 
   const getRecompensas = async () => {
+    if (!user?.token) return;
+    
     try {
       setIsLoading(true);
       setError(null);
@@ -68,6 +72,8 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const getCanjes = async () => {
+    if (!user?.id) return;
+    
     try {
       setIsLoading(true);
       setError(null);
@@ -123,12 +129,6 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (user?.token) {
-      getRecompensas();
-    }
-  }, [user?.token]);
 
   return (
     <RecompensaContext.Provider value={{ 

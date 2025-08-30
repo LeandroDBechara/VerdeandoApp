@@ -74,20 +74,21 @@ const IntercambiosContext = createContext<IntercambiosContextType | undefined>(u
 export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [intercambios, setIntercambios] = useState<Intercambio[]>([]);
   const [residuos, setResiduos] = useState<Residuo[]>([]);
-  const { user } = useUser();
+  const { user, refreshUser } = useUser();
   const { verificarPuntoVerde } = usePuntoVerde();
 
   useEffect(() => {
     getIntercambios();
     getResiduos();
-  }, [user]);
+  }, [user?.id]);
 
   const getIntercambios = async () => {
+    if (!user?.id) return;
+    
     try {
       console.log("pidiendo intercambios");
       const response = await fetch("https://verdeandoback.onrender.com/intercambios/usuario/"+user?.id);
       const data = await response.json();
-      console.log(data);
       
       if (Array.isArray(data)) {
         data.forEach((intercambio: Intercambio) => {
@@ -149,33 +150,66 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const confirmarIntercambio = async (token:string)=>{
-    const location = await Location.getCurrentPositionAsync({});
-    const current = {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
+    try {
+      console.log("Iniciando confirmación de intercambio con token:", token);
+      console.log("Usuario actual:", user);
+      
+      if (!user?.colaboradorId) {
+        throw new Error("El usuario no tiene ID de colaborador");
+      }
+      
+      const location = await Location.getCurrentPositionAsync({});
+      const current = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      }
+      console.log("Ubicación actual:", current);
+      
+      const puntoVerdeId = await verificarPuntoVerde(current);
+      if(!puntoVerdeId){ 
+        throw new Error("No se encontró un punto verde cercano"); 
+      }else{
+        console.log("Punto verde encontrado:", puntoVerdeId);
+      }
+      
+      const confirmacion ={
+        token: token,
+        colaboradorId: user.colaboradorId,
+        puntoVerdeId: puntoVerdeId
+      }
+      console.log("Datos de confirmación:", confirmacion);
+      
+      const response = await fetch("https://verdeandoback.onrender.com/intercambios/confirmar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(confirmacion),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Error del servidor: ${response.status} - ${errorData}`);
+      }
+      
+      const data = await response.json();
+      console.log("Respuesta del servidor:", data);
+      
+      // Actualizar la lista de intercambios después de confirmar
+      await getIntercambios();
+      
+      // Actualizar los datos del usuario para reflejar los nuevos puntos
+      await refreshUser();
+      
+    } catch (error) {
+      console.error("Error en confirmarIntercambio:", error);
+      throw error; // Re-lanzar el error para que se maneje en el componente
     }
-    const puntoVerdeId = await verificarPuntoVerde(current);
-    if(!puntoVerdeId){ throw new Error("No se encontró un punto verde cercano");}
-    const confirmacion ={
-      token:token,
-      colaboradorId:user?.colaboradorId,
-      puntoVerdeId:puntoVerdeId
-    }
-    const response = await fetch("https://verdeandoback.onrender.com/intercambios/confirmar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(confirmacion),
-    });
-    const data = await response.json();
-    console.log(data);
   }
   
   const getResiduosReciclados = () => {
     let residuos = 0;
-    intercambios.forEach(async (intercambio) => {
+    intercambios.forEach((intercambio) => {
       if(intercambio.estado === "REALIZADO"){
         residuos += intercambio.pesoTotal || 0;
-        console.log(residuos);
       }
     });
     return residuos;

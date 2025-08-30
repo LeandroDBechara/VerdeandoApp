@@ -26,7 +26,10 @@ export const EventoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [eventos, setEventos] = useState<Evento[]>([]);
 
   useEffect(() => {
-    getEventos();
+    // Solo cargar eventos si no se han cargado antes
+    if (eventos.length === 0) {
+      getEventos();
+    }
   }, []);
 
   const getEventos = async () => {

@@ -75,10 +75,16 @@ export default function CameraScreen() {
       <StatusBar translucent={true} backgroundColor={"black"} />
       {!image ? (
         <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef} autofocus="on" onBarcodeScanned={async ({data})=>{
+          console.log("QR escaneado:", data);
+          console.log("Usuario actual:", user);
+          console.log("Rol del usuario:", user?.rol);
+          console.log("Colaborador ID:", user?.colaboradorId);
+          
           if (user?.rol === "COLABORADOR"){
-            setIsLoading(true);
             try {
+              setIsLoading(true);
               await confirmarIntercambio(data);
+              console.log("data",data); 
               setResponseMessage("Intercambio confirmado exitosamente");
               setTimeout(() => {
                 router.replace("/(tabs)/intercambios");
@@ -90,7 +96,7 @@ export default function CameraScreen() {
               router.replace("/(tabs)/intercambios");
             }
           }
-          console.log("data",data); 
+          
         }}>
           {isLoading && (
             <View style={styles.loadingContainer}>

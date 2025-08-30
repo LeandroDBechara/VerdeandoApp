@@ -113,7 +113,7 @@ export default function Login() {
         >
           <Text style={styles.buttonIngresarText}>Ingresar</Text>
         </Pressable>
-        <Text style={{ marginBottom: 10, marginTop: -15 }}>¿Olvidaste la contraseña?</Text>
+        <Text style={{  marginTop: -5 }}> <Link style={styles.link} href="/recuperar">¿Olvidaste la contraseña?</Link></Text>
         <Text style={{ marginBottom: 20 }}>
           ¿Aún no tienes una cuenta? <Link style={styles.link} href={"/register"}>Registrate aquí</Link>
         </Text>

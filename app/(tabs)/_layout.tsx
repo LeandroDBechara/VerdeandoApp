@@ -1,17 +1,15 @@
 import { Platform, View, TouchableOpacity, Image, Modal, Text, StyleSheet } from "react-native";
-import { createDrawerNavigator } from "@react-navigation/drawer";
 import { Stack, Tabs } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 
-const Drawer = createDrawerNavigator();
-
 export default function TabLayout() {
   const router = useRouter();
   const [menuVisible, setMenuVisible] = useState(false);
   const { logout, user } = useUser();
+  
   const renderHeaderLeft = () => (
     <TouchableOpacity 
       onPress={() => router.back()}
@@ -100,7 +98,6 @@ export default function TabLayout() {
             title: "Puntos Verdes",
             tabBarIcon: ({ color }) => <FontAwesome6 name="location-dot" size={24} color={color} />,
             tabBarLabel: "Puntos Verdes",
-            
           }}
         />
         <Tabs.Screen
@@ -111,7 +108,7 @@ export default function TabLayout() {
             tabBarLabel: "Intercambios",
           }}
         />
-              <Tabs.Screen
+        <Tabs.Screen
           name="cuponera"
           options={{
             title: "Cuponera",
@@ -119,7 +116,7 @@ export default function TabLayout() {
             tabBarLabel: "Cuponera",
           }}
         />
-              <Tabs.Screen
+        <Tabs.Screen
           name="comunidad"
           options={{
             title: "Comunidad",
@@ -127,7 +124,6 @@ export default function TabLayout() {
             tabBarLabel: "Comunidad",
           }}
         />
-
       </Tabs>
 
       {/* Modal del menú */}
@@ -156,7 +152,7 @@ export default function TabLayout() {
               onPress={handleCerrarSesion}
             >
               <FontAwesome6 name="sign-out-alt" size={20} color="red" />
-              <Text style={[styles.menuText, { color: 'red' }]}>Cerrar Sesión</Text>
+              <Text style={styles.menuText}>Cerrar Sesión</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

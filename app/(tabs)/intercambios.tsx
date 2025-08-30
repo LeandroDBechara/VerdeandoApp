@@ -70,17 +70,21 @@ export default function Intercambios() {
       <ScrollView style={styles.scrollView}>
         {activeTab === "Realizados" && (
           <>
-            <BarGraph />
+            <BarGraph intercambios={intercambios} />
             {intercambios.map((intercambio) => (
-              <Intercambio key={intercambio.id} intercambio={intercambio} />
+              intercambio.estado === "REALIZADO" && (
+                <Intercambio key={intercambio.id} intercambio={intercambio} />
+              )
             ))}
           </>
         )}
         {activeTab === "Pendientes" && (
           <>
-          {intercambios.map((intercambio) => (
-            <Intercambio key={intercambio.id} intercambio={intercambio} />
-          ))}
+            {intercambios.map((intercambio) => (
+              intercambio.estado === "PENDIENTE" && (
+                <Intercambio key={intercambio.id} intercambio={intercambio} />
+              )
+            ))}
           </>
         )}
       </ScrollView>

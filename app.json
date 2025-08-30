@@ -10,12 +10,24 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.verdeando.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para mostrar puntos verdes cercanos en el mapa.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para mostrar puntos verdes cercanos en el mapa."
+      },
+      "config": {
+        "googleMapsApiKey": "process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+      }
     },
     "android": {
       "package": "com.verdeando.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/White-Verdeando-logo.png"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+        }
       }
     },
     "web": {
@@ -32,7 +44,14 @@
           "imageWidth": 200,
           "resizeMode": "contain"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Esta app necesita acceso a tu ubicación para mostrar puntos verdes cercanos en el mapa."
+        }
       ]
+
     ],
     "experiments": {
       "typedRoutes": true

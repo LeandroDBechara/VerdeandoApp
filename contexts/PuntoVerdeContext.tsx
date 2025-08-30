@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useUser } from './UserContext';
 
 export interface PuntoVerde {
   id?: string;
@@ -17,27 +18,27 @@ export interface PuntoVerde {
 
 interface PuntoVerdeContextType {
   puntosVerdes: PuntoVerde[];
-  puntoVerdeSeleccionado: PuntoVerde | null;
   cargarPuntosVerdes: () => Promise<void>;
   crearPuntoVerde: (data: Omit<PuntoVerde, 'id'>) => Promise<void>;
   actualizarPuntoVerde: (id: string, data: Partial<PuntoVerde>) => Promise<void>;
   eliminarPuntoVerde: (id: string) => Promise<void>;
-  seleccionarPuntoVerde: (punto: PuntoVerde | null) => void;
   isLoading: boolean;
-  verificarPuntoVerde: (location: { latitude: number; longitude: number }) => Promise<string>;
+  verificarPuntoVerde: (location: { latitude: number; longitude: number }) => Promise<string | undefined>;
 }
 
 const PuntoVerdeContext = createContext<PuntoVerdeContextType | undefined>(undefined);
 
-const API_URL = 'https://verdeandoback.onrender.com/puntos-verdes'; // Cambia esto por tu endpoint real
+const API_URL = 'https://verdeandoback.onrender.com/puntos-verdes';
 
 export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) {
   const [puntosVerdes, setPuntosVerdes] = useState<PuntoVerde[]>([]);
-  const [puntoVerdeSeleccionado, setPuntoVerdeSeleccionado] = useState<PuntoVerde | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const { user } = useUser();
   useEffect(() => {
-    cargarPuntosVerdes();
+    // Solo cargar puntos verdes si no se han cargado antes
+    if (puntosVerdes.length === 0) {
+      cargarPuntosVerdes();
+    }
   }, []);
 
   const cargarPuntosVerdes = async () => {
@@ -57,13 +58,36 @@ export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) 
   const crearPuntoVerde = async (data: Omit<PuntoVerde, 'id'>) => {
     setIsLoading(true);
     try {
+      const datos = {
+        latitud: data.latitud,
+        longitud: data.longitud,
+        direccion: data.direccion,
+        nombre: data.nombre,
+        descripcion: data.descripcion,
+        imagen: data.imagen,
+        diasAtencion: data.diasAtencion,
+        horario: data.horario,
+        colaboradorId: user?.colaborador?.id,
+        residuosAceptados: data.residuosAceptados
+      };
+      
+      console.log('Datos a enviar:', datos);
+      
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(datos),
       });
-      if (!res.ok) throw new Error('Error al crear punto verde');
+      
+      if (!res.ok) {
+        const errorData = await res.text();
+        throw new Error(`Error al crear punto verde: ${res.status} - ${errorData}`);
+      }
+      
       await cargarPuntosVerdes();
+    } catch (error) {
+      console.error('Error en crearPuntoVerde:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -97,27 +121,63 @@ export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const seleccionarPuntoVerde = (punto: PuntoVerde | null) => {
-    setPuntoVerdeSeleccionado(punto);
-  };
-
-  const verificarPuntoVerde = async (location:{latitude:number,longitude:number})=>{
-    const res = await fetch(`${API_URL}/verificar`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify(location)
-    });
-    const data = await res.json();
-    return data;
-  }
-  useEffect(() => {
+  const verificarPuntoVerde = async (location: { latitude: number; longitude: number }) => {
+    const maxIntentos = 5;
+    const tiempoEspera = 2000; // 2 segundos entre intentos
     
-  }, []);
+    for (let intento = 1; intento <= maxIntentos; intento++) {
+      try {
+        console.log(`Verificando punto verde para ubicación (intento ${intento}/${maxIntentos}):`, location);
+
+        // Verificar que los puntos verdes estén cargados
+        if (puntosVerdes.length === 0) {
+          console.log("Puntos verdes no cargados, cargando...");
+          await cargarPuntosVerdes();
+        }
+
+        const puntosverdesColaborador = puntosVerdes.filter((puntoVerde: PuntoVerde) => {
+          return puntoVerde.colaboradorId === user?.colaborador?.id;
+        });
+
+        const puntosverdesExist = puntosverdesColaborador.filter((puntoVerde: PuntoVerde) => {
+          // Verificar que el punto verde tenga coordenadas válidas
+          if (!puntoVerde.latitud || !puntoVerde.longitud) {
+            return false;
+          }
+          
+          // Calcular la diferencia en latitud y longitud
+          const diffLat = Math.abs(puntoVerde.latitud - location.latitude);
+          const diffLng = Math.abs(puntoVerde.longitud - location.longitude);
+          
+          // Filtrar puntos verdes dentro del radio de 0.002 grados
+          return diffLat <= 0.002 && diffLng <= 0.002;
+        });
+
+        if (puntosverdesExist.length > 0) {
+          console.log(`Punto verde encontrado en el intento ${intento}`);
+          return puntosverdesExist[0].id;
+        } else {
+          throw new Error("No se encontró un punto verde cercano");
+        }
+        
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.log(`Error en intento ${intento}:`, errorMessage);
+        
+        // Si es el último intento, lanzar el error
+        if (intento === maxIntentos) {
+          throw new Error(`No se pudo verificar el punto verde después de ${maxIntentos} intentos: ${errorMessage}`);
+        }
+        
+        // Esperar antes del siguiente intento
+        console.log(`Esperando ${tiempoEspera}ms antes del siguiente intento...`);
+        await new Promise(resolve => setTimeout(resolve, tiempoEspera));
+      }
+    }
+  }
 
   return (
-    <PuntoVerdeContext.Provider value={{ puntosVerdes, puntoVerdeSeleccionado, cargarPuntosVerdes, crearPuntoVerde, actualizarPuntoVerde, eliminarPuntoVerde, seleccionarPuntoVerde, isLoading, verificarPuntoVerde }}>
+    <PuntoVerdeContext.Provider value={{ puntosVerdes, cargarPuntosVerdes, crearPuntoVerde, actualizarPuntoVerde, eliminarPuntoVerde, isLoading, verificarPuntoVerde }}>
       {children}
     </PuntoVerdeContext.Provider>
   );

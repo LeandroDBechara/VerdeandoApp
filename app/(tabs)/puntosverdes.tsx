@@ -1,22 +1,21 @@
 import BasuraTipos from "@/components/BasuraTipos";
 import Mapa from "@/components/Mapa";
 import ModalCrearPV from "@/components/ModalCrearPV";
+import ModalDetallePuntoVerde from "@/components/ModalDetallePuntoVerde";
 import { useIntercambios, Residuo } from "@/contexts/IntercambiosContext";
-import { PuntoVerde, usePuntoVerde } from "@/contexts/PuntoVerdeContext";
+import { PuntoVerde } from "@/contexts/PuntoVerdeContext";
 import { useUser } from "@/contexts/UserContext";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useState } from "react";
-import { Text, View, Pressable, StyleSheet, TextInput, TouchableOpacity, Modal } from "react-native";
+import { Text, View, Pressable, StyleSheet, TextInput, TouchableOpacity, Modal, Image } from "react-native";
 
 export default function PuntosVerdes() {
   const [searchText, setSearchText] = useState("");
-  const [ModalPVVisible, setModalPVVisible] = useState(false);
+  const {residuos} = useIntercambios();
+  const {user} = useUser();
+  const [ModalPVVisible, setModalPVVisible] = useState<[boolean, PuntoVerde | null]>([false, null]);
   const [ModalCreatePV, setModalCreatePV] = useState(false);
   const [selectedResiduo, setSelectedResiduo] = useState<Residuo | null>(null);
-  const { user } = useUser();
-  const [puntoVerde, setPuntoVerde] = useState<PuntoVerde | null>(null);
-  const { residuos } = useIntercambios();
-  
   const handleSearch = (text: string) => {
     setSearchText(text);
   };
@@ -24,26 +23,14 @@ export default function PuntosVerdes() {
   const clearSearch = () => {
     setSearchText("");
   };
-
-  const handleModalVisible = (visible: boolean, puntoVerde: PuntoVerde) => {
-    setModalPVVisible(visible);
-    setPuntoVerde(puntoVerde);
-  };
-
-  const handleResiduoSelection = (residuo: Residuo) => {
-    if (selectedResiduo?.id === residuo.id) {
-      setSelectedResiduo(null);
-    } else {
-      setSelectedResiduo(residuo);
-    }
-  };
+  
 
   return (
-    <View>
+    <View style={{flex: 1, width: "100%", height: "100%"}}>
       <Mapa 
-        setModalVisible={handleModalVisible} 
-        searchText={searchText}
-        selectedResiduo={selectedResiduo}
+        setModalVisible={(visible, puntoVerde) => setModalPVVisible([visible, puntoVerde])} 
+        searchText={searchText} 
+        selectedResiduo={selectedResiduo} 
       />
       <View
         style={{
@@ -53,12 +40,13 @@ export default function PuntosVerdes() {
           right: 20,
         }}
       >
-        <View>
+        {/* Buscador */}
+       <View>
           <View style={styles.searchContainer}>
             <FontAwesome6 name="magnifying-glass" size={20} color="lightgreen" style={styles.searchIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Buscar dirección..."
+              placeholder="Buscar punto verde..."
               value={searchText}
               onChangeText={handleSearch}
               placeholderTextColor="gray"
@@ -71,6 +59,7 @@ export default function PuntosVerdes() {
           </View>
         </View>
 
+        {/* Residuos */}
         <View
           style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 5, flexWrap: "wrap", gap: 5 }}
         >
@@ -78,61 +67,18 @@ export default function PuntosVerdes() {
             <BasuraTipos 
               key={residuo.id} 
               residuo={residuo} 
-              selected={selectedResiduo?.id === residuo.id} 
-              setSelected={() => handleResiduoSelection(residuo)} 
+              selected={false}
+              setSelected={() => {}}
             />
           ))}
         </View>
 
-        {/* Información del residuo seleccionado */}
-        {selectedResiduo && (
-          <View style={styles.selectedResiduoInfo}>
-            <Text style={styles.selectedResiduoText}>
-              Mostrando puntos verdes que aceptan: {selectedResiduo.material}
-            </Text>
-            <TouchableOpacity 
-              style={styles.clearFilterButton}
-              onPress={() => setSelectedResiduo(null)}
-            >
-              <FontAwesome6 name="times" size={16} color="white" />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={ModalPVVisible}
-          onRequestClose={() => {
-            setModalPVVisible(false);
-          }}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContent}>
-              <Text style={styles.text}>Nombre del local: {puntoVerde?.nombre}</Text>
-              <Text style={styles.text}>Dirección del local: {puntoVerde?.direccion}</Text>
-              <Text style={styles.text}>Descripción: {puntoVerde?.descripcion}</Text>
-              <Text style={styles.text}>Días de atención: {puntoVerde?.diasAtencion}</Text>
-              <Text style={styles.text}>Horario de atención: {puntoVerde?.horario}</Text>
-              <Text style={styles.text}>Imagen: {puntoVerde?.imagen}</Text>
-              <Text style={styles.text}>Colaborador: {puntoVerde?.colaboradorId}</Text>
-              {puntoVerde?.residuosAceptados && puntoVerde.residuosAceptados.length > 0 && (
-                <Text style={styles.text}>
-                  Residuos aceptados: {puntoVerde.residuosAceptados.join(', ')}
-                </Text>
-              )}
-              <Pressable style={styles.closeButton} onPress={() => setModalPVVisible(false)}>
-                <Text style={styles.closeButtonText}>Cerrar</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
+        {/* Botón de crear punto verde */}
       </View>
       {user?.rol === "COLABORADOR" && (
         <View>
           <Pressable style={styles.addButton} onPress={() => {
-            setModalPVVisible(false);
-            setPuntoVerde(null);
+            setModalPVVisible([false, null]);
             setModalCreatePV(true);
             
           }}>
@@ -142,16 +88,14 @@ export default function PuntosVerdes() {
           <ModalCrearPV ModalCreatePV={ModalCreatePV} setModalCreatePV={setModalCreatePV} />
         </View>
       )}
-      
+      <ModalDetallePuntoVerde modalPVVisible={ModalPVVisible} setModalPVVisible={setModalPVVisible} />
     </View>
+
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 10,
-    backgroundColor: "white",
-  },
+ 
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -187,14 +131,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
-  clearFilterButton: {
-    backgroundColor: "rgba(255,255,255,0.3)",
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   modalBackground: {
     flex: 1,
     justifyContent: "center",
@@ -236,5 +173,10 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     paddingTop: 4,
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
   },
 });

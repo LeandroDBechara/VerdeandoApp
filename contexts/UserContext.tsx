@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
@@ -55,18 +55,22 @@ interface UserContextType {
   logout: () => Promise<void>;
   updateUser: (userData: User) => Promise<void>;
   updateColaborador: (colaboradorData: Colaborador) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-
+  const hasLoadedUser = useRef(false);
 
   useEffect(() => {
-    // Cargar datos del usuario al iniciar la app
-    loadUser();
-  }, []);
+    // Cargar datos del usuario al iniciar la app solo una vez
+    if (!hasLoadedUser.current && !user) {
+      loadUser();
+      hasLoadedUser.current = true;
+    }
+  }, [user]);
 
   const loadUser = async () => {
     try {
@@ -217,8 +221,36 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } 
   }
 
+  const refreshUser = async () => {
+    try {
+      if (!user?.id) return;
+      
+      console.log("Actualizando datos del usuario desde la API...");
+      const response = await fetch(`https://verdeandoback.onrender.com/usuarios/${user.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error al obtener usuario: ${response.status}`);
+      }
+      
+      const userData = await response.json();
+      
+      setUser(userData);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      
+      console.log("Usuario actualizado con éxito. Nuevos puntos:", userData.puntos);
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+      throw error;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, setUser, login, register, logout, updateUser, updateColaborador }}>
+    <UserContext.Provider value={{ user, setUser, login, register, logout, updateUser, updateColaborador, refreshUser }}>
       {children}
     </UserContext.Provider>
   );
