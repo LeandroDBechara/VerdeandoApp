@@ -24,6 +24,15 @@ export default function PuntosVerdes() {
     setSearchText("");
   };
   
+  const handleResiduoSelect = (residuo: Residuo) => {
+    if (selectedResiduo?.id === residuo.id) {
+      // Si ya está seleccionado, deseleccionarlo
+      setSelectedResiduo(null);
+    } else {
+      // Seleccionar el nuevo residuo
+      setSelectedResiduo(residuo);
+    }
+  };
 
   return (
     <View style={{flex: 1, width: "100%", height: "100%"}}>
@@ -67,8 +76,8 @@ export default function PuntosVerdes() {
             <BasuraTipos 
               key={residuo.id} 
               residuo={residuo} 
-              selected={false}
-              setSelected={() => {}}
+              selected={selectedResiduo?.id === residuo.id}
+              setSelected={() => handleResiduoSelect(residuo)}
             />
           ))}
         </View>
@@ -173,6 +182,18 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     paddingTop: 4,
+  },
+  filterIndicator: {
+    backgroundColor: "lightgreen",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  filterText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   image: {
     width: 100,

@@ -42,28 +42,48 @@ export default function Mapa({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchText && searchText.trim()) {
-        
+        // Filtrar puntos verdes por texto de búsqueda
+        const filtered = puntosVerdes.filter(puntoVerde => {
+          const searchLower = searchText.toLowerCase();
+          const nombreMatch = puntoVerde.nombre?.toLowerCase().includes(searchLower);
+          const direccionMatch = puntoVerde.direccion?.toLowerCase().includes(searchLower);
+          return nombreMatch || direccionMatch;
+        });
+        setFilteredPuntosVerdes(filtered);
       } else {
         setSearchResult(null);
+        // Si no hay texto de búsqueda, aplicar solo el filtro de residuos
+        filterPuntosVerdes();
       }
-    }, 1000); // Esperar 1 segundo después de que el usuario deje de escribir
+    }, 500); // Reducir el tiempo de espera a 500ms para mejor experiencia
 
     return () => clearTimeout(timeoutId);
-  }, [searchText]);
+  }, [searchText, puntosVerdes]);
 
   useEffect(() => {
     filterPuntosVerdes();
   }, [selectedResiduo, puntosVerdes]);
 
   const filterPuntosVerdes = () => {
-    if (!selectedResiduo) {
-      setFilteredPuntosVerdes(puntosVerdes);
-      return;
+    let filtered = puntosVerdes;
+    
+    // Aplicar filtro de residuos si hay uno seleccionado
+    if (selectedResiduo) {
+      filtered = filtered.filter(puntoVerde => 
+        puntoVerde.residuosAceptados?.includes(selectedResiduo.material || '')
+      );
     }
-
-    const filtered = puntosVerdes.filter(puntoVerde => 
-      puntoVerde.residuosAceptados?.includes(selectedResiduo.material || '')
-    );
+    
+    // Aplicar filtro de búsqueda si hay texto
+    if (searchText && searchText.trim()) {
+      const searchLower = searchText.toLowerCase();
+      filtered = filtered.filter(puntoVerde => {
+        const nombreMatch = puntoVerde.nombre?.toLowerCase().includes(searchLower);
+        const direccionMatch = puntoVerde.direccion?.toLowerCase().includes(searchLower);
+        return nombreMatch || direccionMatch;
+      });
+    }
+    
     setFilteredPuntosVerdes(filtered);
   };
 

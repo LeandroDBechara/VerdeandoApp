@@ -2,9 +2,9 @@ import { Residuo } from "@/contexts/IntercambiosContext";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Pressable, Text, StyleSheet, ImageSourcePropType, Image } from "react-native";
     
-export default function BasuraTipos ({ residuo, selected, setSelected }: { residuo: Residuo, selected: boolean, setSelected: (selected: boolean) => void }) {
+export default function BasuraTipos ({ residuo, selected, setSelected }: { residuo: Residuo, selected: boolean, setSelected: () => void }) {
     return (
-        <Pressable onPress={() => setSelected(!selected)} style={[styles.interestingButton, { backgroundColor: selected ? "lightgreen" : "white" }]}>
+        <Pressable onPress={setSelected} style={[styles.interestingButton, { backgroundColor: selected ? "lightgreen" : "white" }]}>
             <Image source={residuo.icon} style={{ width: 24, height: 24, resizeMode: "contain" }} />
             <Text>{residuo.material}</Text>
         </Pressable>    

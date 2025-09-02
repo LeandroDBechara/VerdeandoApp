@@ -1,23 +1,31 @@
 import { Platform, View, TouchableOpacity, Image, Modal, Text, StyleSheet } from "react-native";
 import { Stack, Tabs } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { useRouter } from "expo-router";
+import { useRouter, usePathname } from "expo-router";
 import { useState } from "react";
 import { useUser } from "@/contexts/UserContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [menuVisible, setMenuVisible] = useState(false);
   const { logout, user } = useUser();
-  
-  const renderHeaderLeft = () => (
-    <TouchableOpacity 
-      onPress={() => router.back()}
-      style={{ marginLeft: 16, marginRight: 5 }}
-    >
-      <FontAwesome6 name="arrow-left" size={20} color="green" />
-    </TouchableOpacity>
-  );
+  const pathname = usePathname();
+  const renderHeaderLeft = () => { 
+    return (
+      pathname === "/" ? (
+        null
+      ) : (
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          style={{ marginLeft: 16, marginRight: 5 }}
+        >
+          <FontAwesome6 name="arrow-left" size={20} color="green" />
+        </TouchableOpacity>
+      )
+    );
+  }
 
   const renderHeaderRight = () => (
     <TouchableOpacity 
@@ -60,8 +68,8 @@ export default function TabLayout() {
           headerLeft: renderHeaderLeft,
           headerRight: renderHeaderRight,
           headerStyle: {
-            backgroundColor: 'white',
-            height: 92,
+            
+            height: 90,
           },
           headerTitleStyle: {
             color: 'green',
@@ -74,12 +82,16 @@ export default function TabLayout() {
           tabBarStyle: Platform.select({
             ios: {
               position: "absolute",
+              borderTopWidth: 1,
+              borderTopColor: "lightgray",
+              height: insets.bottom+5,
+              paddingBottom: 0,
             },
             default: {
               position: "absolute",
               borderTopWidth: 1,
               borderTopColor: "lightgray",
-              height: 60,
+              height: insets.bottom+5,
               paddingBottom: 0,
             },
           }),
@@ -151,7 +163,7 @@ export default function TabLayout() {
               style={styles.menuItem}
               onPress={handleCerrarSesion}
             >
-              <FontAwesome6 name="sign-out-alt" size={20} color="red" />
+              <FontAwesome6 name="right-from-bracket" size={20} color="red" />
               <Text style={styles.menuText}>Cerrar Sesión</Text>
             </TouchableOpacity>
           </View>

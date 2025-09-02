@@ -33,18 +33,18 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [canjes, setCanjes] = useState<Canje[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useUser();
+  const { user, refreshUser } = useUser();
 
   useEffect(() => {
-    if (user?.token) {
+    if (user) {
       getRecompensas();
       getCanjes();
     }
-  }, [user?.token]);
+  }, [user]);
 
   const getRecompensas = async () => {
-    if (!user?.token) return;
-    
+    if (!user) return;
+  
     try {
       setIsLoading(true);
       setError(null);
@@ -62,7 +62,13 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       const data = await response.json();
-      setRecompensas(data);
+      // Ordenar recompensas por puntos de menor a mayor
+      const recompensasOrdenadas = data.sort((a: Recompensa, b: Recompensa) => {
+        const puntosA = a.puntos || 0;
+        const puntosB = b.puntos || 0;
+        return puntosA - puntosB;
+      });
+      setRecompensas(recompensasOrdenadas);
     } catch (error) {
       console.error('Error al obtener recompensas:', error);
       setError(error instanceof Error ? error.message : 'Error desconocido');
@@ -102,7 +108,7 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const canjearRecompensa = async (recompensaId: string) => {
     try {
-      const response = await fetch("https://verdeandoback.onrender.com/recompensas/canjear", {
+      const response = await fetch("https://verdeandoback.onrender.com/recompensas/canje", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -121,6 +127,8 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Actualizar la lista de recompensas después del canje
       await getRecompensas();
+      await refreshUser();
+      await getCanjes();
     } catch (error) {
       console.error('Error al canjear recompensa:', error);
       setError(error instanceof Error ? error.message : 'Error desconocido');

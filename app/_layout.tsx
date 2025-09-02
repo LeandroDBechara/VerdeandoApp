@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { router, SplashScreen, Stack } from "expo-router";
+import { router, SplashScreen, Stack, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ function RootLayoutNav() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useUser();
   const [menuVisible, setMenuVisible] = useState(false);
+  const pathname = usePathname(); 
   
   useEffect(() => {
     if (!user) {
@@ -22,13 +23,15 @@ function RootLayoutNav() {
   }, [user]);
 
   const renderHeaderLeft = () => (
+
     <TouchableOpacity 
-      onPress={() => router.back()}
-      style={{ marginRight: 5 }}
-    >
-      <FontAwesome6 name="arrow-left" size={20} color="green" />
-    </TouchableOpacity>
-  );
+    onPress={() => router.back()}
+    style={{ marginRight: 5 }}
+  >
+    <FontAwesome6 name="arrow-left" size={20} color="green" />
+  </TouchableOpacity>
+  )
+  
 
   const renderHeaderRight = () => (
     <TouchableOpacity 
@@ -58,7 +61,7 @@ function RootLayoutNav() {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>   
+    <View style={{ flex: 1, paddingBottom: insets.bottom }}>   
       <Stack screenOptions={{
         headerLeft: renderHeaderLeft,
         headerRight: renderHeaderRight,

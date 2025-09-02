@@ -10,12 +10,12 @@ import { z } from "zod";
 import * as ImagePicker from "expo-image-picker";
 
 const userSchema = z.object({
-    nombre: z.string().nonempty("El nombre es obligatorio"),
-    apellido: z.string().nonempty("El apellido es obligatorio"),
-    email: z.string().nonempty("El email es obligatorio").email("Correo inválido"),
-    password: z.string().nonempty("La contraseña es obligatoria").min(6, "Mínimo 6 caracteres"),
-    fechaDeNacimiento: z.string().nonempty("La fecha de nacimiento es obligatoria"),
-    direccion: z.string().nonempty("La dirección es obligatoria"),
+    nombre: z.string().nonempty("El nombre es obligatorio").optional(),
+    apellido: z.string().nonempty("El apellido es obligatorio").optional(),
+    email: z.string().nonempty("El email es obligatorio").email("Correo inválido").optional(),
+    fechaDeNacimiento: z.string().nonempty("La fecha de nacimiento es obligatoria") .optional(),
+    direccion: z.string().nonempty("La dirección es obligatoria") .optional(),
+    fotoPerfil: z.string().nonempty("La foto de perfil es obligatoria").optional(),
 });
 const colaboradorSchema = z.object({
     cvu: z.string().nonempty("El CVU es obligatorio"),
@@ -24,11 +24,11 @@ const colaboradorSchema = z.object({
 });
 
 const puntoVerdeSchema = z.object({
-    nombre: z.string().nonempty("El nombre es obligatorio"),
-    direccion: z.string().nonempty("La dirección es obligatoria"),
-    descripcion: z.string().nonempty("La descripción es obligatoria"),
-    diasAtencion: z.string().nonempty("Los días de atención son obligatorios"),
-    horario: z.string().nonempty("El horario es obligatorio"),
+    nombre: z.string().nonempty("El nombre es obligatorio").optional()  , 
+    direccion: z.string().nonempty("La dirección es obligatoria").optional(),
+    descripcion: z.string().nonempty("La descripción es obligatoria").optional(),
+    diasAtencion: z.string().nonempty("Los días de atención son obligatorios").optional(),
+    horario: z.string().nonempty("El horario es obligatorio").optional(),
 });
 
 export default function UserConfig() {
@@ -44,6 +44,7 @@ export default function UserConfig() {
         handleSubmit,
         formState: { errors },
         setError,
+        setValue,
       } = useForm({
         resolver: zodResolver(userSchema),
       });
@@ -68,22 +69,23 @@ export default function UserConfig() {
     });
 
     const onSubmit = async (data: {
-        nombre: string;
-        apellido: string;
-        email: string;
-        password: string;
-        fechaDeNacimiento: string;
-        direccion: string;
+        nombre: string | undefined;
+        apellido: string | undefined;
+        email: string | undefined;
+        fechaDeNacimiento: string | undefined;
+        direccion: string | undefined;
+        fotoPerfil: string | undefined;
     }) => {
         try {
             const userData = {
-                nombre: data.nombre,
-                apellido: data.apellido,
-                email: data.email,
-                password: data.password,
-                fechaDeNacimiento: data.fechaDeNacimiento,
-                direccion: data.direccion,
+                nombre: data.nombre || undefined,
+                apellido: data.apellido || undefined,
+                email: data.email || undefined,
+                fechaDeNacimiento: data.fechaDeNacimiento || undefined,
+                direccion: data.direccion || undefined,
+                fotoPerfil: data.fotoPerfil || undefined,
             }
+
             await updateUser(userData);
             console.log("Usuario actualizado");
             setIsEditingUser(false);
@@ -120,7 +122,7 @@ export default function UserConfig() {
             });
             if (!result.canceled) {
                 const image = result.assets[0].uri;
-                console.log(image);
+                setValue("fotoPerfil", image);
             }
         } catch (error) {
             console.log(error);
@@ -203,7 +205,7 @@ export default function UserConfig() {
                 
                 <Image source={ user?.fotoPerfil ? {uri: user?.fotoPerfil} : require("@/assets/images/perfil.png")} style={styles.image} />
                 {isEditingUser && (
-                    <Pressable onPress={() => {uploadImage()}}><Text>Editar foto de perfil</Text></Pressable>
+                    <Pressable style={styles.imageButton} onPress={() => {uploadImage()}}><Text style={{color: "white"}}>Editar foto de perfil</Text></Pressable>
                 )}
                 
                 {isEditingUser ? (
@@ -301,26 +303,8 @@ export default function UserConfig() {
                             )}
                         />
                         {errors.fechaDeNacimiento && <Text style={styles.error}>{errors.fechaDeNacimiento.message}</Text>}
-                        
-                        <Controller
-                            control={control}
-                            name="password"
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <View style={styles.inputContainer}>
-                                    <Text>Contraseña: </Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="********"
-                                        keyboardType="visible-password"
-                                        onBlur={onBlur}
-                                        onChangeText={onChange}
-                                        value={value}
-                                    />
-                                </View>
-                            )}
-                        />
-                        {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
-                        <Pressable onPress={handleSubmit(onSubmit)} style={styles.button}>
+        
+                        <Pressable onPress={handleSubmit(onSubmit as any)} style={styles.button}>
                             <Text style={styles.buttonText}>Guardar</Text>
                         </Pressable>
                         {errors.root && <Text style={styles.error}>{errors.root.message}</Text>}
@@ -346,10 +330,6 @@ export default function UserConfig() {
                         <View style={styles.readOnlyRow}>
                             <Text style={styles.readOnlyLabel}>Fecha de Nacimiento:</Text>
                             <Text style={styles.readOnlyValue}>{user?.fechaDeNacimiento?.split("T")[0]}</Text>
-                        </View>
-                        <View style={styles.readOnlyRow}>
-                            <Text style={styles.readOnlyLabel}>Contraseña:</Text>
-                            <Text style={styles.readOnlyValue}>********</Text>
                         </View>
                     </View>
                 )}
@@ -606,6 +586,15 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
+    },
+    imageButton: {
+        backgroundColor: "green",
+        padding: 10,
+        borderRadius: 5,
+        width: "50%",
+        alignSelf: "flex-start",
+        justifyContent: "center",
+        alignItems: "center",
     },
     button: {
         backgroundColor: "green",

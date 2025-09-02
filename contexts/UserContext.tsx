@@ -120,6 +120,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
+      console.log("Usuario logueado:", userData);
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
       throw error;
@@ -174,6 +175,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         throw new Error(result.message || "Error en la actualización");
       }
+      setUser(result);
       console.log("Usuario actualizado");
     } catch (error) {
       console.error('Error al actualizar usuario:', error);
