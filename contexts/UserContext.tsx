@@ -1,11 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 
 enum Role {
   ADMIN = 'ADMIN',
   USUARIO = 'USUARIO',
   COLABORADOR = 'COLABORADOR',
+}
+
+// Asegura que las rutas relativas de imagen se conviertan en URLs absolutas
+function normalizePhotoUrl(photo?: string): string | undefined {
+  if (!photo) return undefined;
+  const trimmed = String(photo).trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  const base = process.env.EXPO_PUBLIC_API_URL;
+  if (trimmed.startsWith('/')) return `${base}${trimmed}`;
+  return `${base}/${trimmed}`;
 }
 
 interface User {
@@ -54,7 +64,7 @@ interface UserContextType {
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: User) => Promise<void>;
-  updateColaborador: (colaboradorData: Colaborador) => Promise<void>;
+  updateColaborador: (colaboradorData: any) => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -65,24 +75,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const hasLoadedUser = useRef(false);
 
   useEffect(() => {
-    // Cargar datos del usuario al iniciar la app solo una vez
-    if (!hasLoadedUser.current && !user) {
+    if (!hasLoadedUser.current) {
       loadUser();
       hasLoadedUser.current = true;
     }
-  }, [user]);
+  }, []);
+
 
   const loadUser = async () => {
     try {
-      console.log("cargando usuario");
-      const userData = await AsyncStorage.getItem('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        console.log("Usuario cargado desde AsyncStorage:", userData);
       }
     } catch (error) {
-      console.error('Error al cargar datos del usuario:', error);
-    } finally {
-      
+      console.log('Error al cargar usuario desde AsyncStorage:', error);
     }
   };
 
@@ -95,34 +104,27 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify(credentials),
       });
-      
-      const result = await response.json();
-      
       if (!response.ok) {
-        throw new Error(result.message || "Error en la autenticación");
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
-
+      const result = await response.json();
+      console.log("Inicio de sesión exitoso:", result);
+      
+      // Extraer los datos del usuario y normalizar la foto de perfil
       const userData: User = {
-        id: result.user.id,
-        email: result.user.email,
-        nombre: result.user.nombre,
-        apellido: result.user.apellido,
-        fechaDeNacimiento: result.user.fechaDeNacimiento,
-        fotoPerfil: result.user.fotoPerfil,
-        puntos: result.user.puntos,
-        direccion: result.user.direccion,
-        rol: result.user.rol,
-        colaboradorId: result.user.colaborador?.id,
-        comunidadId: result.user.comunidadId,
-        colaborador: result.user.colaborador,
-        token: result.token.accessToken
+        ...result.user,
+        token: result.token.accessToken,
+        fotoPerfil: normalizePhotoUrl(result.user.fotoPerfil)
       };
-
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      
+      console.log("Datos del usuario a guardar:", userData);
       setUser(userData);
-      console.log("Usuario logueado:", userData);
+      
+      // Guardar en AsyncStorage para persistencia
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
-      console.error('Error al iniciar sesión:', error);
+      console.log('Error al iniciar sesión:', error);
       throw error;
     }
   };
@@ -136,58 +138,88 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify(credentials),
       });
-      
-      const result = await response.json();
-      
       if (!response.ok) {
-        throw new Error(result.message || "Error en el registro");
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
-
+      const result = await response.json();
       console.log("Registro exitoso:", result);
     } catch (error) {
-      console.error('Error al registrar usuario:', error);
+      console.log('Error al registrar usuario:', error);
       throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('user');
+      // Limpiar el estado del usuario
+      router.replace("/login");
       setUser(null);
-      router.replace('/login');
+      // Limpiar AsyncStorage
+      await AsyncStorage.removeItem('user');
+      console.log("Usuario deslogueado exitosamente");
+      
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      console.log('Error al cerrar sesión:', error);
       throw error;
     }
   };
 
   const updateUser = async (userData: User) => {
     try {
-      const response = await fetch(`https://verdeandoback.onrender.com/auth/update/${user?.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          //"Authorization": `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify(userData),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || "Error en la actualización");
+      const formData = new FormData();
+
+      if (typeof userData.nombre !== 'undefined') formData.append('nombre', String(userData.nombre));
+      if (typeof userData.apellido !== 'undefined') formData.append('apellido', String(userData.apellido));
+      if (typeof userData.email !== 'undefined') formData.append('email', String(userData.email));
+      if (typeof userData.fechaDeNacimiento !== 'undefined') formData.append('fechaDeNacimiento', String(userData.fechaDeNacimiento));
+      if (typeof userData.direccion !== 'undefined') formData.append('direccion', String(userData.direccion));
+
+      // fotoPerfil puede ser uri string; adjuntarla como archivo si hay valor
+      if (userData.fotoPerfil) {
+        const uri = userData.fotoPerfil;
+        // Solo adjuntar si es un archivo local (no URL remota)
+        const isLocalFile = uri.startsWith('file://') || uri.startsWith('content://');
+        if (isLocalFile) {
+          const filename = uri.split('/').pop() || `perfil_${Date.now()}.jpg`;
+          const ext = filename.split('.').pop()?.toLowerCase();
+          const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+          const file: any = { uri, name: filename, type: mime };
+          // El backend espera el campo 'fotoPerfil' como binario según Swagger
+          formData.append('fotoPerfil', file);
+        }
       }
-      setUser(result);
-      console.log("Usuario actualizado");
+
+      const response = await fetch(`https://verdeandoback.onrender.com/usuarios/${user?.id}`, {
+        method: "PATCH",
+        // No fijar Content-Type manualmente para permitir boundary correcto
+        headers: user?.token ? { Authorization: `Bearer ${user.token}` } : undefined,
+        body: formData as any,
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+
+      // Hacer merge con el usuario actual para preservar campos (token, ids, etc.)
+      const mergedUser: User = { ...(user || {}), ...(result || {}) } as User;
+      if (mergedUser.fotoPerfil) {
+        mergedUser.fotoPerfil = normalizePhotoUrl(mergedUser.fotoPerfil);
+      }
+      setUser(mergedUser);
+      await AsyncStorage.setItem('user', JSON.stringify(mergedUser));
+      console.log("Usuario actualizado y sincronizado en AsyncStorage");
     } catch (error) {
-      console.error('Error al actualizar usuario:', error);
+      console.log('Error al actualizar usuario:', error);
       throw error;
     }
   }
   
-  const updateColaborador = async (colaboradorData: Colaborador) => {
+  const updateColaborador = async (colaboradorData: any ) => {
     try {
-      if(user?.colaboradorId) {
-        colaboradorData.id = user.colaboradorId;
-        const response = await fetch(`https://verdeandoback.onrender.com/usuarios/colaborador/${colaboradorData.id}`, {
+      if(user?.colaborador?.id) {
+        const response = await fetch(`https://verdeandoback.onrender.com/usuarios/colaborador/${user.colaborador.id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -195,38 +227,42 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           }, 
           body: JSON.stringify(colaboradorData),
         });
-        const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.message || "Error en la actualización");
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
         }
-        console.log("Colaborador actualizado");
       }
-      if(!user?.comunidadId) {
+      if(!user?.colaborador?.id) {
+        const colaborador = {
+          ...colaboradorData,
+          usuarioId: user?.id,
+        }
         const response = await fetch(`https://verdeandoback.onrender.com/usuarios/colaborador`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             //"Authorization": `Bearer ${user?.token}`,
           }, 
-          body: JSON.stringify(colaboradorData),
+          body: JSON.stringify(colaborador),
         });
-        const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.message || "Error en la actualización");
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
         }
-        console.log("Colaborador actualizado");
       }
-      
     } catch (error) {
-      console.error('Error al actualizar colaborador:', error);
+      console.log('Error al actualizar colaborador:', error);
       throw error;
-    } 
+    }
+    finally {
+      refreshUser();
+    }
   }
 
   const refreshUser = async () => {
     try {
       if (!user?.id) return;
-      
+
       console.log("Actualizando datos del usuario desde la API...");
       const response = await fetch(`https://verdeandoback.onrender.com/usuarios/${user.id}`, {
         method: "GET",
@@ -236,18 +272,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (!response.ok) {
-        throw new Error(`Error al obtener usuario: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
       
-      const userData = await response.json();
+      const result = await response.json();
       
-      setUser(userData);
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      // La API devuelve la estructura { user: { ... } }
+      const userData = result.user;
       
-      console.log("Usuario actualizado con éxito. Nuevos puntos:", userData.puntos);
+      if (userData && userData.fotoPerfil) {
+        userData.fotoPerfil = normalizePhotoUrl(userData.fotoPerfil);
+      }
+      
+      // Preservar el token del usuario actual
+      const updatedUser: User = {
+        ...userData,
+        token: user?.token
+      };
+      
+      setUser(updatedUser);
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      console.log("Usuario actualizado desde la API:", updatedUser);
+ 
     } catch (error) {
-      console.error('Error al actualizar usuario:', error);
+      console.log('Error al actualizar usuario:', error);
       throw error;
+    }
+    finally {
+      console.log("Usuario : ", user);
     }
   };
 

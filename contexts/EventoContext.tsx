@@ -37,12 +37,14 @@ export const EventoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log("pidiendo eventos");
       const response = await fetch("https://verdeandoback.onrender.com/eventos");
       if (!response.ok) {
-        throw new Error("Error al obtener los eventos");
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
       setEventos(data);
     } catch (error) {
-      console.error(error);
+      console.log("Error al obtener eventos:", error);
+      throw error;
     }
   };
 

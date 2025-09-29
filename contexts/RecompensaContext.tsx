@@ -37,13 +37,18 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (user) {
-      getRecompensas();
       getCanjes();
     }
-  }, [user]);
+  }, [user?.id]);
+
+  useEffect(() => {
+    getRecompensas();
+    if (user) {
+      getCanjes();
+    }
+  }, []);
 
   const getRecompensas = async () => {
-    if (!user) return;
   
     try {
       setIsLoading(true);
@@ -58,7 +63,8 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (!response.ok) {
-        throw new Error('Error al obtener las recompensas');
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -70,8 +76,9 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
       setRecompensas(recompensasOrdenadas);
     } catch (error) {
-      console.error('Error al obtener recompensas:', error);
-      setError(error instanceof Error ? error.message : 'Error desconocido');
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.log('Error al obtener recompensas:', message);
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -93,14 +100,16 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (!response.ok) {
-        throw new Error('Error al obtener los canjes');
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
       setCanjes(data);
     } catch (error) {
-      console.error('Error al obtener canjes:', error);
-      setError(error instanceof Error ? error.message : 'Error desconocido');
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.log('Error al obtener canjes:', message);
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -122,16 +131,16 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al canjear la recompensa');
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
-
       // Actualizar la lista de recompensas después del canje
       await getRecompensas();
-      await refreshUser();
+      await refreshUser();//para actualizar los puntos del usuario
       await getCanjes();
     } catch (error) {
-      console.error('Error al canjear recompensa:', error);
-      setError(error instanceof Error ? error.message : 'Error desconocido');
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.log('Error al canjear recompensa:', message);
+      setError(message);
       throw error;
     } finally {
       setIsLoading(false);

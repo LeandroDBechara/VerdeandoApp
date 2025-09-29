@@ -13,11 +13,14 @@ import {
   Pressable,
   ScrollView,
   TouchableOpacity,
+  Image,
+  Alert,
 } from "react-native";
 import { z } from "zod";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MapView from "react-native-maps";
 import { ubicacion } from "./Mapa";
+import * as ImagePicker from "expo-image-picker";
 
 export default function ModalCrearPV({
   ModalCreatePV,
@@ -34,14 +37,14 @@ export default function ModalCrearPV({
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [direccion, setDireccion] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const registerSchema = z.object({
     nombre: z.string().nonempty("El nombre es obligatorio"),
     direccion: z.string().nonempty("La dirección es obligatoria"),
     descripcion: z.string().nonempty("La descripción es obligatoria"),
-    diasAtencion: z.string().nonempty("Los días de atención son obligatorios"),
-    horario: z.string().nonempty("El horario es obligatorio"),
-    imagen: z.string().nonempty("La imagen es obligatoria"),
+    diasHorarioAtencion: z.string().nonempty("Los días de atención son obligatorios"),
+    imagen: z.string().optional(),
     coordenadas: z.object({
       lat: z.number().min(-90, "La latitud debe ser mayor a -90").max(90, "La latitud debe ser menor a 90"),
       lng: z.number().min(-180, "La longitud debe ser mayor a -180").max(180, "La longitud debe ser menor a 180"),
@@ -61,8 +64,8 @@ export default function ModalCrearPV({
       nombre: "",
       direccion: "",
       descripcion: "",
-      diasAtencion: "",
-      horario: "",
+      diasHorarioAtencion: "",
+      
       imagen: "",
       coordenadas: {
         lat: coordinates?.lat || 0,
@@ -70,6 +73,35 @@ export default function ModalCrearPV({
       },
     },
   });
+
+  const pickImage = async () => {
+    try {
+      // Solicitar permisos
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permisos requeridos', 'Se necesitan permisos para acceder a la galería de fotos.');
+        return;
+      }
+
+      // Abrir selector de imagen
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+        // También actualizar el valor del formulario
+        const form = watch();
+        form.imagen = result.assets[0].uri;
+      }
+    } catch (error) {
+      console.error('Error al seleccionar imagen:', error);
+      Alert.alert('Error', 'No se pudo seleccionar la imagen.');
+    }
+  };
 
   const searchAddress = async (query: string) => {
     if (query.length < 3) {
@@ -161,6 +193,7 @@ export default function ModalCrearPV({
 
     const puntoVerdeData = {
       ...data,
+      imagen: selectedImage || data.imagen, // Usar la imagen seleccionada o la del formulario
       latitud: coordinates.lat,
       longitud: coordinates.lng,
       residuosAceptados: selectedResiduos,
@@ -173,8 +206,8 @@ export default function ModalCrearPV({
       setSelectedResiduos([]);
       setCoordinates(null);
     } catch (error) {
-      console.error("Error al crear punto verde:", error);
-      alert("Error al crear el punto verde");
+      console.log("Error al crear punto verde:", error);
+      alert("Error al crear el punto verde: " + error);
     }
   };
 
@@ -188,7 +221,8 @@ export default function ModalCrearPV({
         reset();
         setSelectedResiduos([]);
         setCoordinates(null);
-       
+        setDireccion("");
+        setSelectedImage(null);
       }}
     >
       <View style={styles.modalBackground}>
@@ -306,66 +340,44 @@ export default function ModalCrearPV({
 
             <Controller
               control={control}
-              name="diasAtencion"
+              name="diasHorarioAtencion"
               render={({ field: { onChange, onBlur, value } }) => (
                 <View>
                   <View style={styles.inputContainer}>
                     <Text style={styles.placeholder}>Días de atención</Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="Ej: Lunes a Viernes"
+                      placeholder="Ej: Lunes a Viernes de 8:00 a 18:00\nSábados de 8:00 a 12:00"
                       keyboardType="default"
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
+                      multiline
                     />
                   </View>
-                  {errors.diasAtencion && <Text style={styles.error}>{errors.diasAtencion.message}</Text>}
+                  {errors.diasHorarioAtencion && <Text style={styles.error}>{errors.diasHorarioAtencion.message}</Text>}
                 </View>
               )}
             />
 
-            <Controller
-              control={control}
-              name="horario"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Horario</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Ej: 8:00 - 18:00"
-                      keyboardType="default"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
+            <View>
+              <Text style={styles.placeholder}>Imagen del punto verde</Text>
+              <View style={styles.imageContainer}>
+                {selectedImage ? (
+                  <View style={styles.selectedImageContainer}>
+                    <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
+                    <Pressable style={styles.changeImageButton} onPress={pickImage}>
+                      <Text style={styles.changeImageButtonText}>Cambiar imagen</Text>
+                    </Pressable>
                   </View>
-                  {errors.horario && <Text style={styles.error}>{errors.horario.message}</Text>}
-                </View>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="imagen"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>URL de imagen</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="https://ejemplo.com/imagen.jpg"
-                      keyboardType="url"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </View>
-                  {errors.imagen && <Text style={styles.error}>{errors.imagen.message}</Text>}
-                </View>
-              )}
-            />
+                ) : (
+                  <Pressable style={styles.selectImageButton} onPress={pickImage}>
+                    <FontAwesome6 name="image" size={24} color="#666" />
+                    <Text style={styles.selectImageButtonText}>Seleccionar imagen</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
 
             {/* Sección de residuos aceptados */}
             <View style={styles.residuosSection}>
@@ -403,11 +415,12 @@ export default function ModalCrearPV({
             <Pressable
               style={styles.cancelButton}
               onPress={() => {
-                setModalCreatePV(false);
-                reset();
-                setSelectedResiduos([]);
-                setCoordinates(null);
-                setDireccion("");
+                      setModalCreatePV(false);
+      reset();
+      setSelectedResiduos([]);
+      setCoordinates(null);
+      setDireccion("");
+      setSelectedImage(null);
               }}
             >
               <Text style={styles.cancelButtonText}>Cancelar</Text>
@@ -590,5 +603,47 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 10,
     fontStyle: "italic",
+  },
+  imageContainer: {
+    width: 300,
+    marginBottom: 10,
+  },
+  selectedImageContainer: {
+    alignItems: "center",
+    gap: 10,
+  },
+  selectedImage: {
+    width: 200,
+    height: 150,
+    borderRadius: 10,
+    resizeMode: "cover",
+  },
+  changeImageButton: {
+    backgroundColor: "#2C7865",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  changeImageButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  selectImageButton: {
+    width: "100%",
+    height: 120,
+    borderWidth: 2,
+    borderColor: "#D9D9D9",
+    borderStyle: "dashed",
+    borderRadius: 10,
+    backgroundColor: "#f9f9f9",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+  },
+  selectImageButtonText: {
+    color: "#666",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

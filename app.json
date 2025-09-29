@@ -5,7 +5,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/White-Verdeando-logo.png",
-    "scheme": ["verdeandoapp", "fb674819048296621"],
+    "scheme": [
+      "verdeandoapp",
+      "fb674819048296621"
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -50,20 +53,19 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Esta app necesita acceso a tu ubicación para mostrar puntos verdes cercanos en el mapa."
         }
-      ]
-
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Esta app necesita acceso a tus fotos para permitirte compartirlas con tus amigos."
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
     },
-    /*"extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "051543c8-14cd-469e-8097-21ca1e27d526"
-      }
-    },*/
     "owner": "leodbechara"
   }
 }

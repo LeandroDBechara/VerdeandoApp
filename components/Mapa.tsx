@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, Alert } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { PuntoVerde, usePuntoVerde } from "@/contexts/PuntoVerdeContext";
@@ -64,6 +64,12 @@ export default function Mapa({
     filterPuntosVerdes();
   }, [selectedResiduo, puntosVerdes]);
 
+  useEffect(() => {
+    if (puntosVerdes.length === 0) {
+      Alert.alert("Información", "No se encontraron puntos verdes");
+    }
+  }, [puntosVerdes]);
+
   const filterPuntosVerdes = () => {
     let filtered = puntosVerdes;
     
@@ -107,6 +113,7 @@ export default function Mapa({
  
   return (
     <View style={{flex: 1, width: "100%", height: "100%"}}>
+      
       <MapView
         style={styles.map}
         showsUserLocation={true}

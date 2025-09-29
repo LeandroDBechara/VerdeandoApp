@@ -1,21 +1,25 @@
 import Login from "./login";
-import Camerascreen from "@/components/Camera";
-import Mapa from "@/components/Mapa";
-import { StatusBar, Text, View } from "react-native";
-import Constants from "expo-constants";
 import Onboarding from "./onboarding";
 import React from "react";
-import PuntosVerdes from "./(tabs)/puntosverdes";
-import BarGraph from "@/components/estadisticas/BarGraph";
-import Cuponera from "./(tabs)/cuponera";
-import Home from "./(tabs)/index";
-import { EventoProvider } from "@/contexts/EventoContext";
-import { UserProvider } from "@/contexts/UserContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { View, ActivityIndicator } from "react-native";
+
+function AppContent() {
+  const { hasSeenOnboarding, isLoading } = useOnboarding();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+      </View>
+    );
+  }
+
+  return hasSeenOnboarding ? <Login /> : <Onboarding />;
+}
 
 export default function Index() {
   return (
-    <UserProvider>  
-     <Login />
-    </UserProvider>
+    <AppContent />
   );
 }

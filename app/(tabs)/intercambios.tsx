@@ -59,8 +59,8 @@ export default function Intercambios() {
       setResiduosData({});
       setModalVisible(false);
     } catch (error) {
-      console.error("Error al crear intercambio:", error);
-      alert("Error al crear el intercambio");
+      console.log("Error al crear intercambio: ", error);
+      alert("Error al crear el intercambio: " + error);
     }
   };
 
@@ -76,6 +76,9 @@ export default function Intercambios() {
                 <Intercambio key={intercambio.id} intercambio={intercambio} />
               )
             ))}
+            {intercambios.length === 0 && (
+              <Text style={styles.noDataText}>No has realizado ningún intercambio aún, animate a cambiar el mundo </Text>
+            )}
           </>
         )}
         {activeTab === "Pendientes" && (
@@ -85,6 +88,9 @@ export default function Intercambios() {
                 <Intercambio key={intercambio.id} intercambio={intercambio} />
               )
             ))}
+            {intercambios.length === 0 && (
+              <Text style={styles.noDataText}>No hay intercambios pendientes en este momento </Text>
+            )}
           </>
         )}
       </ScrollView>
@@ -119,7 +125,7 @@ export default function Intercambios() {
             <View style={styles.modalCodigoContainer}>
               <Text style={styles.modalCodigoText}>Código:</Text>
               <View style={styles.modalCodigoInputContainer}>
-                <TextInput placeholder="Código" keyboardType="numeric" onChangeText={setCodigo} value={codigo} />
+                <TextInput style={styles.modalCodigoInput} placeholder="Código" keyboardType="numeric" onChangeText={setCodigo} value={codigo} />
               </View>
             </View>
             <View style={styles.modalCodigoButtonContainer}>
@@ -202,12 +208,26 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   modalCodigoInputContainer: {
-        height: 40,
-        backgroundColor: "white",
-        borderColor: "#D9D9D9",
-        borderWidth: 1,
-        color: "#929292",
-        padding: 10,
+    height: 40,
+    backgroundColor: "white",
+    borderColor: "#D9D9D9",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    justifyContent: "center"
+  },
+  modalCodigoInput: {
+    color: "black",
+    fontSize: 16,
+    flex: 1,
+    textAlign: "left",
+  },
+  noDataText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    textAlign: "center",
+    flexWrap: "wrap",
   },
   modalCodigoButton: {
     backgroundColor: "lightgreen",

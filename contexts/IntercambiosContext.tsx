@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useUser } from "./UserContext";
-import * as Location from "expo-location";// Tipo basado en tu modelo Prisma
+import * as Location from "expo-location";
 import { usePuntoVerde } from "./PuntoVerdeContext";
 import { ImageSourcePropType } from "react-native";
 export interface Intercambio {
@@ -88,6 +88,10 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       console.log("pidiendo intercambios");
       const response = await fetch("https://verdeandoback.onrender.com/intercambios/usuario/"+user?.id);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       
       if (Array.isArray(data)) {
@@ -104,7 +108,8 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setIntercambios([]);
       }
     } catch (error) {
-      console.error("Error al obtener intercambios:", error);
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.log("Error al obtener intercambios:", message);
       setIntercambios([]);
     }
   };
@@ -112,6 +117,10 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const getResiduos = async () => {
     try {
       const response = await fetch("https://verdeandoback.onrender.com/residuos");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       
       if (Array.isArray(data)) {
@@ -124,7 +133,8 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setResiduos([]);
       }
     } catch (error) {
-      console.error("Error al obtener residuos:", error);
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.log("Error al obtener residuos:", message);
       setResiduos([]);
     }
   };
@@ -145,6 +155,10 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dataIntercambio),
     });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+    }
     const data = await response.json();
     setIntercambios((prev) => [...prev, data]);
   };
@@ -154,7 +168,7 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.log("Iniciando confirmación de intercambio con token:", token);
       console.log("Usuario actual:", user);
       
-      if (!user?.colaboradorId) {
+      if (user?.rol !== "COLABORADOR") {
         throw new Error("El usuario no tiene ID de colaborador");
       }
       
@@ -174,7 +188,7 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       const confirmacion ={
         token: token,
-        colaboradorId: user.colaboradorId,
+        colaboradorId: user.colaborador?.id,
         puntoVerdeId: puntoVerdeId
       }
       console.log("Datos de confirmación:", confirmacion);
@@ -186,8 +200,8 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
       
       if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`Error del servidor: ${response.status} - ${errorData}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
@@ -200,7 +214,8 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       await refreshUser();
       
     } catch (error) {
-      console.error("Error en confirmarIntercambio:", error);
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.log("Error en confirmarIntercambio:", message);
       throw error; // Re-lanzar el error para que se maneje en el componente
     }
   }

@@ -36,9 +36,9 @@ export default function Login() {
   const onSubmit = async (data: { email: string; password: string }) => {
     try {
       await login(data);
-      router.replace("/(tabs)");
     } catch (error) {
-      setError("root", { type: "manual", message: "Usuario o contraseña incorrectos" });
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      setError("root", { type: "manual", message: errorMessage });
     }
   };
 

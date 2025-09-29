@@ -74,30 +74,32 @@ export default function CameraScreen() {
     <View style={styles.container}>
       <StatusBar translucent={true} backgroundColor={"black"} />
       {!image ? (
-        <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef} autofocus="on" onBarcodeScanned={async ({data})=>{
-          console.log("QR escaneado:", data);
-          console.log("Usuario actual:", user);
-          console.log("Rol del usuario:", user?.rol);
-          console.log("Colaborador ID:", user?.colaboradorId);
-          
-          if (user?.rol === "COLABORADOR"){
-            try {
-              setIsLoading(true);
-              await confirmarIntercambio(data);
-              console.log("data",data); 
-              setResponseMessage("Intercambio confirmado exitosamente");
-              setTimeout(() => {
+        <View style={styles.cameraContainer}>
+          <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef} autofocus="on" onBarcodeScanned={async ({data})=>{
+            console.log("QR escaneado:", data);
+            console.log("Usuario actual:", user);
+            console.log("Rol del usuario:", user?.rol);
+            console.log("Colaborador ID:", user?.colaboradorId);
+            
+            if (user?.rol === "COLABORADOR"){
+              try {
+                setIsLoading(true);
+                await confirmarIntercambio(data);
+                console.log("data",data); 
+                setResponseMessage("Intercambio confirmado exitosamente");
+                setTimeout(() => {
+                  router.replace("/(tabs)/intercambios");
+                }, 2000);
+              } catch (error) {
+                setResponseMessage("Error al confirmar el intercambio");
+              } finally {
+                setIsLoading(false);
                 router.replace("/(tabs)/intercambios");
-              }, 2000);
-            } catch (error) {
-              setResponseMessage("Error al confirmar el intercambio");
-            } finally {
-              setIsLoading(false);
-              router.replace("/(tabs)/intercambios");
+              }
             }
-          }
+            
+          }} />
           
-        }}>
           {isLoading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="white" />
@@ -120,7 +122,7 @@ export default function CameraScreen() {
               />
             </View>
           </View>
-        </CameraView>
+        </View>
       ) : (
         <Image source={{ uri: image }} style={styles.camera} />
       )}
@@ -150,6 +152,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingBottom: 10,
   },
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   camera: {
     flex: 1,
   },
@@ -170,9 +176,14 @@ const styles = StyleSheet.create({
     color: "white",
   },
   topcamera: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 30,
+    zIndex: 1,
   },
   topRightButtons: {
     flexDirection: "row",

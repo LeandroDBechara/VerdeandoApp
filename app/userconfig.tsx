@@ -10,25 +10,44 @@ import { z } from "zod";
 import * as ImagePicker from "expo-image-picker";
 
 const userSchema = z.object({
-    nombre: z.string().nonempty("El nombre es obligatorio").optional(),
-    apellido: z.string().nonempty("El apellido es obligatorio").optional(),
-    email: z.string().nonempty("El email es obligatorio").email("Correo inválido").optional(),
-    fechaDeNacimiento: z.string().nonempty("La fecha de nacimiento es obligatoria") .optional(),
-    direccion: z.string().nonempty("La dirección es obligatoria") .optional(),
-    fotoPerfil: z.string().nonempty("La foto de perfil es obligatoria").optional(),
+    nombre: z.string().optional(),
+    apellido: z.string().optional(),
+    email: z.string().email("Correo inválido").optional(),
+    fechaDeNacimiento: z.string().optional(),
+    direccion: z.string().optional(),
+    fotoPerfil: z.string().optional(),
 });
+// Validaciones para CUIT/CUIL (11 con dígito verificador). Campos de colaborador son opcionales.
+const isValidCuitCuil = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, "");
+    if (digits.length !== 11) return false;
+    const multipliers = [5,4,3,2,7,6,5,4,3,2];
+    const sum = multipliers
+        .map((m, i) => m * parseInt(digits[i], 10))
+        .reduce((a, b) => a + b, 0);
+    let check = 11 - (sum % 11);
+    if (check === 11) check = 0;
+    if (check === 10) check = 9;
+    return check === parseInt(digits[10], 10);
+};
+
 const colaboradorSchema = z.object({
-    cvu: z.string().nonempty("El CVU es obligatorio"),
-    domicilioFiscal: z.string().nonempty("El domicilio fiscal es obligatorio"),
-    cuitCuil: z.string().nonempty("El CUIL/CUIT es obligatorio"),
+    cvu: z.string()
+        .trim()
+        .optional()
+        .refine((v) => !v || /^\d{22}$/.test(v), { message: "El CVU debe contener exactamente 22 dígitos numéricos" }),
+    domicilioFiscal: z.string().trim().optional(),
+    cuitCuil: z.string()
+        .trim()
+        .optional()
+        .refine((v) => !v || /^\d{2}-\d{8}-\d{1}$/.test(v), { message: "El CUIL/CUIT debe tener formato XX-XXXXXXXX-X" })
+        .refine((v) => !v || isValidCuitCuil(v?.replace(/-/g, '')), { message: "El CUIL/CUIT ingresado no es válido (falló el dígito verificador)" }),
 });
 
 const puntoVerdeSchema = z.object({
-    nombre: z.string().nonempty("El nombre es obligatorio").optional()  , 
-    direccion: z.string().nonempty("La dirección es obligatoria").optional(),
-    descripcion: z.string().nonempty("La descripción es obligatoria").optional(),
-    diasAtencion: z.string().nonempty("Los días de atención son obligatorios").optional(),
-    horario: z.string().nonempty("El horario es obligatorio").optional(),
+    nombre: z.string().optional(),
+    descripcion: z.string().optional(),
+    diasHorarioAtencion: z.string().optional(),
 });
 
 export default function UserConfig() {
@@ -90,26 +109,27 @@ export default function UserConfig() {
             console.log("Usuario actualizado");
             setIsEditingUser(false);
         } catch (error) {
-            setError("root", { type: "manual", message: "Error en la actualización" });
+            const errorMessage = error instanceof Error ? error.message : "Error en la actualización";
+            setError("root", { type: "manual", message: errorMessage });
         }
     }
 
     const onSubmitColaborador = async (data: {
-        cvu: string;
-        domicilioFiscal: string;
-        cuitCuil: string;
+        cvu?: string;
+        domicilioFiscal?: string;
+        cuitCuil?: string;
     }) => {
         try {
             const colaboradorData = {
-                cvu: data.cvu,
-                domicilioFiscal: data.domicilioFiscal,
-                cuitCuil: data.cuitCuil,
+                cvu: data.cvu || undefined,
+                domicilioFiscal: data.domicilioFiscal || undefined,
+                cuitCuil: data.cuitCuil || undefined,
             }
             await updateColaborador(colaboradorData);
-            console.log("Colaborador actualizado");
             setShowColaborador(false);
         } catch (error) {
-            setErrorColaborador("root", { type: "manual", message: "Error en la actualización" });
+            const errorMessage = error instanceof Error ? error.message : "Error en la actualización";
+            setErrorColaborador("root", { type: "manual", message: errorMessage });
         }
     }
 
@@ -142,10 +162,8 @@ export default function UserConfig() {
     const iniciarEdicionPuntoVerde = (puntoVerde: any) => {
         setEditingPuntoVerde(puntoVerde.id);
         setValuePuntoVerde("nombre", puntoVerde.nombre || "");
-        setValuePuntoVerde("direccion", puntoVerde.direccion || "");
         setValuePuntoVerde("descripcion", puntoVerde.descripcion || "");
-        setValuePuntoVerde("diasAtencion", puntoVerde.diasAtencion || "");
-        setValuePuntoVerde("horario", puntoVerde.horario || "");
+        setValuePuntoVerde("diasHorarioAtencion", puntoVerde.diasHorarioAtencion || "");
     };
 
     const cancelarEdicionPuntoVerde = () => {
@@ -395,10 +413,31 @@ export default function UserConfig() {
                                     <TextInput
                                         style={styles.input}
                                         placeholder={user?.colaborador?.cuitCuil || ""}
-                                        keyboardType="default"
+                                        keyboardType="numeric"
                                         onBlur={onBlur}
-                                        onChangeText={onChange}
+                                        onChangeText={(text) => {
+                                            // Remover todos los caracteres no numéricos
+                                            let formatted = text.replace(/\D/g, '');
+                                            
+                                            // Aplicar formato XX-XXXXXXXX-X
+                                            if (formatted.length > 0) {
+                                                if (formatted.length <= 2) {
+                                                    formatted = formatted;
+                                                } else if (formatted.length <= 10) {
+                                                    formatted = formatted.slice(0, 2) + '-' + formatted.slice(2);
+                                                } else {
+                                                    formatted = formatted.slice(0, 2) + '-' + formatted.slice(2, 10) + '-' + formatted.slice(10, 11);
+                                                }
+                                            }
+                                            
+                                            if (formatted.length > 13) {
+                                                formatted = formatted.slice(0, 13);
+                                            }
+                                            
+                                            onChange(formatted);
+                                        }}
                                         value={value}
+                                        maxLength={13}
                                     />
                                 </View>
                             )}
@@ -440,22 +479,6 @@ export default function UserConfig() {
                                                 />
                                                 {errorsPuntoVerde.nombre && <Text style={styles.error}>{errorsPuntoVerde.nombre.message}</Text>}
                                                 
-                                                <Controller
-                                                    control={controlPuntoVerde}
-                                                    name="direccion"
-                                                    render={({ field: { onChange, onBlur, value } }) => (
-                                                        <View style={styles.inputContainer}>
-                                                            <Text>Dirección: </Text>
-                                                            <TextInput
-                                                                style={styles.input}
-                                                                value={value}
-                                                                onBlur={onBlur}
-                                                                onChangeText={onChange}
-                                                            />
-                                                        </View>
-                                                    )}
-                                                />
-                                                {errorsPuntoVerde.direccion && <Text style={styles.error}>{errorsPuntoVerde.direccion.message}</Text>}
                                                 
                                                 <Controller
                                                     control={controlPuntoVerde}
@@ -477,7 +500,7 @@ export default function UserConfig() {
                                                 
                                                 <Controller
                                                     control={controlPuntoVerde}
-                                                    name="diasAtencion"
+                                                    name="diasHorarioAtencion"
                                                     render={({ field: { onChange, onBlur, value } }) => (
                                                         <View style={styles.inputContainer}>
                                                             <Text>Días: </Text>
@@ -491,26 +514,8 @@ export default function UserConfig() {
                                                         </View>
                                                     )}
                                                 />
-                                                {errorsPuntoVerde.diasAtencion && <Text style={styles.error}>{errorsPuntoVerde.diasAtencion.message}</Text>}
-                                                
-                                                <Controller
-                                                    control={controlPuntoVerde}
-                                                    name="horario"
-                                                    render={({ field: { onChange, onBlur, value } }) => (
-                                                        <View style={styles.inputContainer}>
-                                                            <Text>Horario: </Text>
-                                                            <TextInput
-                                                                style={styles.input}
-                                                                value={value}
-                                                                onBlur={onBlur}
-                                                                onChangeText={onChange}
-                                                                placeholder="Ej: 9:00 - 18:00"
-                                                            />
-                                                        </View>
-                                                    )}
-                                                />
-                                                {errorsPuntoVerde.horario && <Text style={styles.error}>{errorsPuntoVerde.horario.message}</Text>}
-                                                
+                                                {errorsPuntoVerde.diasHorarioAtencion && <Text style={styles.error}>{errorsPuntoVerde.diasHorarioAtencion.message}</Text>}
+                          
                                                 <View style={styles.editActions}>
                                                     <Pressable onPress={handleSubmitPuntoVerde(onSubmitPuntoVerde)} style={styles.saveButton}>
                                                         <Text style={styles.buttonText}>Guardar</Text>
@@ -541,10 +546,8 @@ export default function UserConfig() {
                                                     </View>
                                                 </View>
                                                 <View style={styles.puntoVerdeDetails}>
-                                                    <Text style={styles.puntoVerdeLabel}>Dirección: <Text style={styles.puntoVerdeValue}>{punto.direccion}</Text></Text>
                                                     <Text style={styles.puntoVerdeLabel}>Descripción: <Text style={styles.puntoVerdeValue}>{punto.descripcion}</Text></Text>
-                                                    <Text style={styles.puntoVerdeLabel}>Días: <Text style={styles.puntoVerdeValue}>{punto.diasAtencion}</Text></Text>
-                                                    <Text style={styles.puntoVerdeLabel}>Horario: <Text style={styles.puntoVerdeValue}>{punto.horario}</Text></Text>
+                                                    <Text style={styles.puntoVerdeLabel}>Días y Horario: <Text style={styles.puntoVerdeValue}>{punto.diasHorarioAtencion}</Text></Text>
                                                 </View>
                                             </View>
                                         )}

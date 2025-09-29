@@ -1,5 +1,5 @@
-import Camera from "@/components/Camera";
+import QrCamera from "@/components/QrCamera";
 
 export default function CameraScreen() {
-  return <Camera />;
+  return <QrCamera />;
 } 

@@ -1,4 +1,4 @@
-import { Image, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Image, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import { useState } from "react";
 import { Link, useRouter } from "expo-router";
 import React from "react";
@@ -65,10 +65,12 @@ export default function Register() {
       };
       
       await user.register(registerData);
+      Alert.alert("Registro exitoso", "Se ha enviado un correo para verificar tu cuenta");
       console.log("Registro exitoso");
       router.push("/login");
     } catch (error) {
-      setError("root", { type: "manual", message: "Error en el registro" });
+      const errorMessage = error instanceof Error ? error.message : "Error en el registro";
+      setError("root", { type: "manual", message: errorMessage });
     }
   };
 

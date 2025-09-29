@@ -19,7 +19,7 @@ export default function ResiduoIntercambio({ residuo, onDataChange }: ResiduoInt
 
     return (
         <View style={styles.container}>
-            <BasuraTipos residuo={residuo} selected={selected} setSelected={setSelected} />
+            <BasuraTipos residuo={residuo} selected={selected} setSelected={() => setSelected(!selected)} />
             <TextInput
                 style={styles.input}
                 placeholder="Peso"

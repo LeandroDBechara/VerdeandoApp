@@ -2,6 +2,7 @@
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { View, Text, FlatList, Image, Dimensions, StyleSheet, Pressable, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 const { width } = Dimensions.get('window');
 const router = useRouter();
@@ -36,6 +37,7 @@ const slides = [
 export default function Onboarding() {
   const flatListRef = useRef(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const { markOnboardingAsSeen } = useOnboarding();
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
@@ -72,7 +74,13 @@ export default function Onboarding() {
               ))}
             </View>
             {item.button && (
-              <Pressable style={styles.button} onPress={() => router.push('/(tabs)/puntosverdes')}>
+              <Pressable 
+                style={styles.button} 
+                onPress={async () => {
+                  await markOnboardingAsSeen();
+                  router.push('/login');
+                }}
+              >
                 <Text style={styles.buttonText}>¡Estoy listo para reciclar!</Text>
               </Pressable>
             )}

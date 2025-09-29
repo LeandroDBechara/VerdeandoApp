@@ -26,6 +26,9 @@ export default function Home() {
             {eventos.map((evento:EventoType)=>(
                 <Evento key={evento.id} evento={evento} />
             ))}
+            {eventos.length === 0 && (
+                <Text style={styles.noDataText}>No hay eventos en este momento </Text>
+            )}
             </ScrollView>
         </View>
     );
@@ -48,6 +51,13 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         
+    },
+    noDataText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#333",
+        textAlign: "center",
+        flexWrap: "wrap",
     },
     headerImage: {
         width: 150,

@@ -16,11 +16,6 @@ function RootLayoutNav() {
   const [menuVisible, setMenuVisible] = useState(false);
   const pathname = usePathname(); 
   
-  useEffect(() => {
-    if (!user) {
-      router.replace("/login");
-    }
-  }, [user]);
 
   const renderHeaderLeft = () => (
 
@@ -107,7 +102,7 @@ function RootLayoutNav() {
               style={styles.menuItem}
               onPress={handleCerrarSesion}
             >
-              <FontAwesome6 name="sign-out-alt" size={20} color="red" />
+              <FontAwesome6 name="right-from-bracket" size={20} color="red" />
               <Text style={[styles.menuText, { color: 'red' }]}>Cerrar Sesión</Text>
             </TouchableOpacity>
           </View>

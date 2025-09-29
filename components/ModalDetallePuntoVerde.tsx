@@ -14,8 +14,7 @@ export default function ModalDetallePuntoVerde({modalPVVisible, setModalPVVisibl
                 <Text style={styles.title}>{modalPVVisible[1]?.nombre}</Text>
                 <Text style={styles.descripcion}>{modalPVVisible[1]?.descripcion}</Text>
                 <Text style={styles.direccion}><Ionicons name="location" size={20} color="#2C7865"  /> {modalPVVisible[1]?.direccion}</Text>
-                <Text style={styles.diasAtencion}><Ionicons name="calendar" size={20} color="#2C7865" /> {modalPVVisible[1]?.diasAtencion}</Text>
-                <Text style={styles.horario}><Ionicons name="time" size={20} color="#2C7865" /> {modalPVVisible[1]?.horario}</Text>
+                <Text style={styles.diasHorarioAtencion}><Ionicons name="calendar" size={20} color="#2C7865" /> {modalPVVisible[1]?.diasHorarioAtencion}</Text>
                 <Image source={{ uri: modalPVVisible[1]?.imagen }} style={styles.image} resizeMode="cover" /> 
                 <Text style={styles.residuosAceptados}>{modalPVVisible[1]?.residuosAceptados?.join(", ")}</Text>
                 </ScrollView>
@@ -73,14 +72,14 @@ export default function ModalDetallePuntoVerde({modalPVVisible, setModalPVVisibl
         textAlign: "left",
     },
     
-    diasAtencion: {
+    diasHorarioAtencion: {
         fontSize: 16,
         color: "#2C7865",
         marginBottom: 20,
         textAlign: "left",
     },
     
-    horario: {
+    horarioAtencion: {
         fontSize: 16,
         color: "#2C7865",
         marginBottom: 20,
