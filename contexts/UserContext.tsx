@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useRouter } from 'expo-router';
+import { normalizePhotoUrl } from '@/scripts/normalizePhotoUrl';
 
 enum Role {
   ADMIN = 'ADMIN',
@@ -8,15 +9,7 @@ enum Role {
   COLABORADOR = 'COLABORADOR',
 }
 
-// Asegura que las rutas relativas de imagen se conviertan en URLs absolutas
-function normalizePhotoUrl(photo?: string): string | undefined {
-  if (!photo) return undefined;
-  const trimmed = String(photo).trim();
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  const base = process.env.EXPO_PUBLIC_API_URL;
-  if (trimmed.startsWith('/')) return `${base}${trimmed}`;
-  return `${base}/${trimmed}`;
-}
+
 
 interface User {
   id?: string;
@@ -29,7 +22,6 @@ interface User {
   puntos?: number;
   direccion?: string;
   rol?: Role;
-  colaboradorId?: string;
   comunidadId?: string;
   colaborador?: Colaborador;
 }

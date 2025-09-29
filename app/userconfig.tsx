@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, TextInput, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, Text, Pressable, TextInput, StyleSheet, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { useUser } from "@/contexts/UserContext";
 import { usePuntoVerde } from "@/contexts/PuntoVerdeContext";
 import { Image } from "expo-image";
@@ -10,11 +10,11 @@ import { z } from "zod";
 import * as ImagePicker from "expo-image-picker";
 
 const userSchema = z.object({
-    nombre: z.string().optional(),
-    apellido: z.string().optional(),
+    nombre: z.string().min(1, "El nombre es obligatorio").optional(),
+    apellido: z.string().min(1, "El apellido es obligatorio").optional(),
     email: z.string().email("Correo inválido").optional(),
-    fechaDeNacimiento: z.string().optional(),
-    direccion: z.string().optional(),
+    fechaDeNacimiento: z.string().regex(/^\d{2}-\d{2}-\d{4}$/, "Formato inválido el fomato debe ser (DD-MM-AAAA)").optional(),
+    direccion: z.string().min(1, "La dirección es obligatoria").optional(),
     fotoPerfil: z.string().optional(),
 });
 // Validaciones para CUIT/CUIL (11 con dígito verificador). Campos de colaborador son opcionales.
@@ -45,9 +45,9 @@ const colaboradorSchema = z.object({
 });
 
 const puntoVerdeSchema = z.object({
-    nombre: z.string().optional(),
-    descripcion: z.string().optional(),
-    diasHorarioAtencion: z.string().optional(),
+    nombre: z.string().min(1, "El nombre es obligatorio").optional(),
+    descripcion: z.string().min(1, "La descripción es obligatoria").optional(),
+    diasHorarioAtencion: z.string().min(1, "Los días de atención son obligatorios").optional(),
 });
 
 export default function UserConfig() {
@@ -57,6 +57,23 @@ export default function UserConfig() {
     const [showColaborador, setShowColaborador] = useState(false);
     const [puntosVerdesColaborador, setPuntosVerdesColaborador] = useState<any[]>([]);
     const [editingPuntoVerde, setEditingPuntoVerde] = useState<string | null>(null);
+    
+    // Estados de loading
+    const [isUpdatingData, setIsUpdatingData] = useState(false);
+ 
+    
+    // Estados de mensajes de éxito
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
+
+    // Función para mostrar mensaje de éxito
+    const showSuccess = (message: string) => {
+        setSuccessMessage(message);
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+            setShowSuccessMessage(false);
+        }, 3000);
+    };
 
     const {
         control,
@@ -95,7 +112,10 @@ export default function UserConfig() {
         direccion: string | undefined;
         fotoPerfil: string | undefined;
     }) => {
+        if (isUpdatingData) return; // Prevenir múltiples solicitudes
+        
         try {
+            setIsUpdatingData(true);
             const userData = {
                 nombre: data.nombre || undefined,
                 apellido: data.apellido || undefined,
@@ -108,9 +128,12 @@ export default function UserConfig() {
             await updateUser(userData);
             console.log("Usuario actualizado");
             setIsEditingUser(false);
+            showSuccess("Datos de usuario actualizados correctamente");
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Error en la actualización";
             setError("root", { type: "manual", message: errorMessage });
+        } finally {
+            setIsUpdatingData(false);
         }
     }
 
@@ -119,7 +142,10 @@ export default function UserConfig() {
         domicilioFiscal?: string;
         cuitCuil?: string;
     }) => {
+        if (isUpdatingData) return; // Prevenir múltiples solicitudes
+        
         try {
+            setIsUpdatingData(true);
             const colaboradorData = {
                 cvu: data.cvu || undefined,
                 domicilioFiscal: data.domicilioFiscal || undefined,
@@ -127,9 +153,12 @@ export default function UserConfig() {
             }
             await updateColaborador(colaboradorData);
             setShowColaborador(false);
+            showSuccess("Datos de colaborador actualizados correctamente");
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Error en la actualización";
             setErrorColaborador("root", { type: "manual", message: errorMessage });
+        } finally {
+            setIsUpdatingData(false);
         }
     }
 
@@ -151,13 +180,13 @@ export default function UserConfig() {
 
     // Filtrar puntos verdes del colaborador actual
     useEffect(() => {
-        if (user?.colaboradorId && puntosVerdes.length > 0) {
+        if (user?.colaborador?.id && puntosVerdes.length > 0) {
             const puntosDelColaborador = puntosVerdes.filter(
-                punto => punto.colaboradorId === user.colaboradorId
+                punto => punto.colaboradorId === user.colaborador?.id
             );
             setPuntosVerdesColaborador(puntosDelColaborador);
         }
-    }, [user?.colaboradorId, puntosVerdes]);
+    }, [user?.colaborador?.id, puntosVerdes]);
 
     const iniciarEdicionPuntoVerde = (puntoVerde: any) => {
         setEditingPuntoVerde(puntoVerde.id);
@@ -172,15 +201,18 @@ export default function UserConfig() {
     };
 
     const onSubmitPuntoVerde = async (data: any) => {
-        if (!editingPuntoVerde) return;
+        if (!editingPuntoVerde || isUpdatingData) return;
         
         try {
+            setIsUpdatingData(true);
             await actualizarPuntoVerde(editingPuntoVerde, data);
-            Alert.alert("Éxito", "Punto verde actualizado correctamente");
             setEditingPuntoVerde(null);
             resetPuntoVerde();
+            showSuccess("Punto verde actualizado correctamente");
         } catch (error) {
             Alert.alert("Error", "No se pudo actualizar el punto verde");
+        } finally {
+            setIsUpdatingData(false);
         }
     };
 
@@ -194,11 +226,15 @@ export default function UserConfig() {
                     text: "Eliminar",
                     style: "destructive",
                     onPress: async () => {
+                        if (isUpdatingData) return;
                         try {
+                            setIsUpdatingData(true);
                             await eliminarPuntoVerde(id);
-                            Alert.alert("Éxito", "Punto verde eliminado correctamente");
+                            showSuccess("Punto verde eliminado correctamente");
                         } catch (error) {
                             Alert.alert("Error", "No se pudo eliminar el punto verde");
+                        } finally {
+                            setIsUpdatingData(false);
                         }
                     }
                 }
@@ -208,6 +244,13 @@ export default function UserConfig() {
 
     return (
         <ScrollView contentContainerStyle={styles.container} >
+            {/* Mensaje de éxito */}
+            {showSuccessMessage && (
+                <View style={styles.successMessage}>
+                    <Text style={styles.successMessageText}>{successMessage}</Text>
+                </View>
+            )}
+            
             <View style={styles.userContainer}>
                 <View style={styles.headerContainer}>
                     <Text style={styles.sectionTitle}>Datos de Usuario</Text>
@@ -322,8 +365,19 @@ export default function UserConfig() {
                         />
                         {errors.fechaDeNacimiento && <Text style={styles.error}>{errors.fechaDeNacimiento.message}</Text>}
         
-                        <Pressable onPress={handleSubmit(onSubmit as any)} style={styles.button}>
-                            <Text style={styles.buttonText}>Guardar</Text>
+                        <Pressable 
+                            onPress={handleSubmit(onSubmit as any)} 
+                            style={[styles.button, isUpdatingData && styles.buttonDisabled]}
+                            disabled={isUpdatingData}
+                        >
+                            {isUpdatingData ? (
+                                <View style={styles.loadingContainer}>
+                                    <ActivityIndicator size="small" color="white" />
+                                    <Text style={styles.buttonText}>Actualizando...</Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.buttonText}>Guardar</Text>
+                            )}
                         </Pressable>
                         {errors.root && <Text style={styles.error}>{errors.root.message}</Text>}
                     </>
@@ -443,8 +497,19 @@ export default function UserConfig() {
                             )}
                         />
                         {errorsColaborador.cuitCuil && <Text style={styles.error}>{errorsColaborador.cuitCuil.message}</Text>}
-                        <Pressable onPress={handleSubmitColaborador(onSubmitColaborador)} style={styles.button}>
-                            <Text style={styles.buttonText}>Guardar</Text>
+                        <Pressable 
+                            onPress={handleSubmitColaborador(onSubmitColaborador)} 
+                            style={[styles.button, isUpdatingData && styles.buttonDisabled]}
+                            disabled={isUpdatingData}
+                        >
+                            {isUpdatingData ? (
+                                <View style={styles.loadingContainer}>
+                                    <ActivityIndicator size="small" color="white" />
+                                    <Text style={styles.buttonText}>Actualizando...</Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.buttonText}>Guardar</Text>
+                            )}
                         </Pressable>
                         {errorsColaborador.root && <Text style={styles.error}>{errorsColaborador.root.message}</Text>}
 
@@ -517,10 +582,25 @@ export default function UserConfig() {
                                                 {errorsPuntoVerde.diasHorarioAtencion && <Text style={styles.error}>{errorsPuntoVerde.diasHorarioAtencion.message}</Text>}
                           
                                                 <View style={styles.editActions}>
-                                                    <Pressable onPress={handleSubmitPuntoVerde(onSubmitPuntoVerde)} style={styles.saveButton}>
-                                                        <Text style={styles.buttonText}>Guardar</Text>
+                                                    <Pressable 
+                                                        onPress={handleSubmitPuntoVerde(onSubmitPuntoVerde)} 
+                                                        style={[styles.saveButton, isUpdatingData && styles.buttonDisabled]}
+                                                        disabled={isUpdatingData}
+                                                    >
+                                                        {isUpdatingData ? (
+                                                            <View style={styles.loadingContainer}>
+                                                                <ActivityIndicator size="small" color="white" />
+                                                                <Text style={styles.buttonText}>Actualizando...</Text>
+                                                            </View>
+                                                        ) : (
+                                                            <Text style={styles.buttonText}>Guardar</Text>
+                                                        )}
                                                     </Pressable>
-                                                    <Pressable onPress={cancelarEdicionPuntoVerde} style={styles.cancelButton}>
+                                                    <Pressable 
+                                                        onPress={cancelarEdicionPuntoVerde} 
+                                                        style={styles.cancelButton}
+                                                        disabled={isUpdatingData}
+                                                    >
                                                         <Text style={styles.cancelButtonText}>Cancelar</Text>
                                                     </Pressable>
                                                 </View>
@@ -533,15 +613,24 @@ export default function UserConfig() {
                                                     <View style={styles.puntoVerdeActions}>
                                                         <Pressable 
                                                             onPress={() => iniciarEdicionPuntoVerde(punto)}
-                                                            style={styles.editPuntoVerdeButton}
+                                                            style={[styles.editPuntoVerdeButton, (isUpdatingData ) && styles.buttonDisabled]}
+                                                            disabled={isUpdatingData}
                                                         >
                                                             <Text style={styles.editPuntoVerdeButtonText}>Editar</Text>
                                                         </Pressable>
                                                         <Pressable 
                                                             onPress={() => eliminarPuntoVerdeHandler(punto.id)}
-                                                            style={styles.deletePuntoVerdeButton}
+                                                            style={[styles.deletePuntoVerdeButton, (isUpdatingData ) && styles.buttonDisabled]}
+                                                            disabled={isUpdatingData}
                                                         >
-                                                            <Text style={styles.deletePuntoVerdeButtonText}>Eliminar</Text>
+                                                            {isUpdatingData ? (
+                                                                <View style={styles.loadingContainer}>
+                                                                    <ActivityIndicator size="small" color="white" />
+                                                                    <Text style={styles.deletePuntoVerdeButtonText}>Eliminando...</Text>
+                                                                </View>
+                                                            ) : (
+                                                                <Text style={styles.deletePuntoVerdeButtonText}>Eliminar</Text>
+                                                            )}
                                                         </Pressable>
                                                     </View>
                                                 </View>
@@ -769,5 +858,25 @@ const styles = StyleSheet.create({
     puntoVerdeValue: {
         fontWeight: "normal",
         color: "#666",
+    },
+    successMessage: {
+        backgroundColor: "#4CAF50",
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 20,
+        alignItems: "center",
+    },
+    successMessageText: {
+        color: "white",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    buttonDisabled: {
+        opacity: 0.6,
+    },
+    loadingContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
     },
 });
