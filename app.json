@@ -26,7 +26,7 @@
     "android": {
       "package": "com.verdeando.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logoVerdeando.png"
+        "foregroundImage": "./assets/images/dodo-games-logo.png"
       },
       "config": {
         "googleMaps": {
@@ -42,7 +42,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/logoVerdeando.png"
+      "favicon": "./assets/images/dodo-games-logo.png"
     },
     "plugins": [
       "expo-router",
