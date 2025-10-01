@@ -4,7 +4,7 @@
     "slug": "verdeandoapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/White-Verdeando-logo.png",
+    "icon": "./assets/images/dodo-games-logo.png",
     "scheme": [
       "verdeandoapp",
       "fb674819048296621"
@@ -16,7 +16,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para mostrar puntos verdes cercanos en el mapa.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para mostrar puntos verdes cercanos en el mapa."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para mostrar puntos verdes cercanos en el mapa.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "config": {
         "googleMapsApiKey": "process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
@@ -25,29 +26,27 @@
     "android": {
       "package": "com.verdeando.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/White-Verdeando-logo.png"
+        "foregroundImage": "./assets/images/logoVerdeando.png"
       },
       "config": {
         "googleMaps": {
           "apiKey": "process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/White-Verdeando-logo.png"
+      "favicon": "./assets/images/logoVerdeando.png"
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "/assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain"
-        }
-      ],
+      
       [
         "expo-location",
         {
@@ -66,6 +65,12 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "leodbechara"
+    "owner": "leodbechara",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ea866c7a-a28b-415c-99b3-1f86c08a407a"
+      }
+    }
   }
 }

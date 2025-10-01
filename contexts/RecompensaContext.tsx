@@ -95,7 +95,7 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          //"Authorization": `Bearer ${user?.token}`,
+          "Authorization": `Bearer ${user?.token}`,
         },
       });
 

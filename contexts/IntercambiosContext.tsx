@@ -87,7 +87,11 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     try {
       console.log("pidiendo intercambios");
-      const response = await fetch("https://verdeandoback.onrender.com/intercambios/usuario/"+user?.id);
+      const response = await fetch("https://verdeandoback.onrender.com/intercambios/usuario/"+user?.id, {
+        headers: {
+          "Authorization": `Bearer ${user?.token}`,
+        },
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
@@ -152,7 +156,9 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log(dataIntercambio);
     const response = await fetch("https://verdeandoback.onrender.com/intercambios", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json",
+        "Authorization": `Bearer ${user?.token}`,
+      },
       body: JSON.stringify(dataIntercambio),
     });
     if (!response.ok) {
@@ -195,7 +201,9 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       const response = await fetch("https://verdeandoback.onrender.com/intercambios/confirmar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+          "Authorization": `Bearer ${user?.token}`,
+        },
         body: JSON.stringify(confirmacion),
       });
       

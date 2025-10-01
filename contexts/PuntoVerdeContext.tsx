@@ -100,7 +100,9 @@ export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) 
 
       const res = await fetch(API_URL, {
         method: "POST",
-        // No establecer Content-Type manualmente; fetch lo hará con boundary
+        headers: {
+        "Authorization": `Bearer ${user?.token}`,
+        },
         body: formData as any,
       });
 
@@ -132,7 +134,9 @@ export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) 
 
       const res = await fetch(`${API_URL}/${id}/${user?.colaborador?.id}`, {
         method: "PUT",
-        // No establecer Content-Type manualmente; fetch lo hará con boundary
+        headers: {
+          "Authorization": `Bearer ${user?.token}`,
+        },
         body: formData as any,
       });
 
@@ -155,6 +159,9 @@ export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) 
     try {
       const res = await fetch(`${API_URL}/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${user?.token}`,
+        },
       });
       if (!res.ok) {
         const errorData = await res.json();

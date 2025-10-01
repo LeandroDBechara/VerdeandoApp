@@ -80,6 +80,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         setUser(userData);
+        refreshUser();
         console.log("Usuario cargado desde AsyncStorage:", userData);
       }
     } catch (error) {
@@ -184,7 +185,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       const response = await fetch(`https://verdeandoback.onrender.com/usuarios/${user?.id}`, {
         method: "PATCH",
-        // No fijar Content-Type manualmente para permitir boundary correcto
         headers: user?.token ? { Authorization: `Bearer ${user.token}` } : undefined,
         body: formData as any,
       });
@@ -215,7 +215,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            //"Authorization": `Bearer ${user?.token}`,
+            "Authorization": `Bearer ${user?.token}`,
           }, 
           body: JSON.stringify(colaboradorData),
         });
@@ -233,7 +233,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            //"Authorization": `Bearer ${user?.token}`,
+            "Authorization": `Bearer ${user?.token}`,
           }, 
           body: JSON.stringify(colaborador),
         });
@@ -260,6 +260,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${user?.token}`,
         },
       });
       
