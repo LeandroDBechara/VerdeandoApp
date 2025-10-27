@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 16.20.0",
+    "version": ">= 16.20.4",
     "appVersionSource": "remote"
   },
   "build": {
@@ -9,19 +9,6 @@
       "distribution": "internal"
     },
     "preview": {
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "preview2": {
-      "android": {
-        "gradleCommand": ":app:assembleRelease"
-      }
-    },
-    "preview3": {
-      "developmentClient": true
-    },
-    "preview4": {
       "distribution": "internal"
     },
     "production": {

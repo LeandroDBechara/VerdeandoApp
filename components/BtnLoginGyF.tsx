@@ -4,15 +4,19 @@ import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
+import { makeRedirectUri } from "expo-auth-session";
 
 
 WebBrowser.maybeCompleteAuthSession();
+
 export  function BtnLoginGyF() {
   const[accessToken, setAccessToken] = useState<string>("");
   const [requestGoogle, responseGoogle, promptAsyncGoogle] = Google.useAuthRequest({
     clientId: process.env.EXPO_PUBLIC_WEB_CLIENT,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT,
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT,
+    scopes: ["profile", "email"],
+    redirectUri: makeRedirectUri(),
   });
   const [requestFacebook, responseFacebook, promptAsyncFacebook] = Facebook.useAuthRequest({
     clientId: process.env.EXPO_PUBLIC_FACEBOOK_CLIENT,
@@ -43,7 +47,7 @@ export  function BtnLoginGyF() {
 
   const enviarTokenFacebook = async () => {
     console.log(accessToken);
-    const response = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}`);//&fields=id,name,email
+    const response = await fetch(`https://graph.facebook.com/me?access_token=${accessToken} &fields=id,name,email`);
     const data = await response.json();
     console.log("datos del usuario facebook: ", data);
     router.replace("/(tabs)");
