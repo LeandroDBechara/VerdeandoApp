@@ -85,7 +85,7 @@ export const RecompensaProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const getCanjes = async () => {
-    if (!user?.id) return;
+    if (!user?.id && !user?.token) return;
     
     try {
       setIsLoading(true);

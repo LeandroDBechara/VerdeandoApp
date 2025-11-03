@@ -7,15 +7,14 @@ import { useState } from "react";
 export default function Canje({ canje }: { canje: CanjeType }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   return (
-    <View style={styles.cupon}>      
-      <View style={styles.contenido}>
+    <View style={styles.cupon}>
+      <TouchableOpacity style={styles.contenido} activeOpacity={0.8} onPress={() => setIsModalVisible(true)}>
         <Image source={{ uri: canje.recompensa?.foto }} style={styles.imagen} resizeMode="contain" />
-        
         <View style={styles.info}>
           <Text style={styles.nombre}>{canje.recompensa?.titulo}</Text>
           <Text style={styles.precio}>{canje.recompensa?.puntos}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
       <Modal
         visible={isModalVisible}
         transparent={true}
@@ -25,10 +24,15 @@ export default function Canje({ canje }: { canje: CanjeType }) {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.nombre}>{canje.recompensa?.titulo}</Text>
-            <Image source={{ uri: canje.recompensa?.foto }} style={styles.imagen} resizeMode="contain" />
+            <Image source={{ uri: canje.recompensa?.foto }} style={styles.modalImage} resizeMode="contain" />
             <Text style={styles.descripcion}>{canje.recompensa?.descripcion}</Text>
             <Text style={styles.precio}>Puntos requeridos: {canje.recompensa?.puntos}</Text>
             <Text style={styles.fecha}>Fecha de canjeo: {canje.fechaDeCanjeo}</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.botonCanjear} onPress={() => setIsModalVisible(false)}>
+                <Text style={styles.textoBoton}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -119,6 +123,20 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
+    width: "90%",
+    alignItems: "center",
+  },
+  modalImage: {
+    width: "100%",
+    height: 180,
+    borderRadius: 8,
+    marginVertical: 12,
+  },
+  modalActions: {
+    width: "100%",
+    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   descripcion: {
     fontSize: 14,

@@ -83,7 +83,7 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user?.id]);
 
   const getIntercambios = async () => {
-    if (!user?.id) return;
+    if (!user?.id && !user?.token) return;
     
     try {
       console.log("pidiendo intercambios");
