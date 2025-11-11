@@ -2,23 +2,25 @@ import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native"
 import { FontAwesome6 } from "@expo/vector-icons";
 import { tagColor } from "@/constants/TagColors";
 
-export default function InfoTips({ infotip }: { infotip: any }) {
+export default function InfoTips({ infotip, index }: { infotip: any, index?: number }) {
+  const isEven = index !== undefined && index % 2 === 0;
+  const backgroundColor = isEven ? "white" : "#E8F5E9"; // white or light green
+
   return (
-    <Pressable onPress={() => Linking.openURL(infotip.url)} style={styles.container}>
+    <Pressable onPress={() => Linking.openURL(infotip.url)} style={[styles.container, { backgroundColor }]}>
       <View style={[styles.tag, { backgroundColor: tagColor(infotip.tag) }]}>
         <FontAwesome6 name="tag" size={18} color="white" />
          <Text style={{ color: "white" }}>{infotip.tag}</Text>
          </View>
       <Image source={{ uri: infotip.image }} style={styles.image} resizeMode="contain" />
-      <Text style={styles.title}>{infotip.title}</Text>
-      <Text style={styles.description} numberOfLines={3} ellipsizeMode="tail">{infotip.description}</Text>
+      <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">{infotip.titulo}</Text>
+      <Text style={styles.description} numberOfLines={3} ellipsizeMode="tail">{infotip.descripcion}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "white",
     borderRadius: 15,
     width: "48%",
     height: 250,

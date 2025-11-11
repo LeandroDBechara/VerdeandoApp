@@ -10,8 +10,8 @@ export default function InfoTipsRate({ infotip }: { infotip: any }) {
          <Text style={{ color: "white" }}>{infotip.tag}</Text>
          </View>
       <Image source={{ uri: infotip.image }} style={styles.image} resizeMode="cover" />
-      <Text style={styles.title} numberOfLines={2}>{infotip.title}</Text>
-      <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">{infotip.description}</Text>
+      <Text style={styles.title} numberOfLines={2}>{infotip.titulo}</Text>
+      <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">{infotip.descripcion}</Text>
     </Pressable>
   );
 }
