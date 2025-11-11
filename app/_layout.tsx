@@ -9,6 +9,7 @@ import { IntercambiosProvider } from "@/contexts/IntercambiosContext";
 import { EventoProvider } from "@/contexts/EventoContext";
 import { RecompensaProvider } from "@/contexts/RecompensaContext";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { NewsletterProvider } from "@/contexts/NewsletterContext";
 
 function RootLayoutNav() {
   const insets = useSafeAreaInsets();
@@ -134,7 +135,9 @@ export default function RootLayout() {
           <IntercambiosProvider>
             <EventoProvider>
               <RecompensaProvider>
-                <RootLayoutNav />
+                <NewsletterProvider>
+                  <RootLayoutNav />
+                </NewsletterProvider>
               </RecompensaProvider>
             </EventoProvider>
           </IntercambiosProvider>
