@@ -1,12 +1,16 @@
 import InfoTips from "@/components/infotips";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNewsletter } from "@/contexts/NewsletterContext";
+import StatsTabs from "@/components/estadisticas/StatsTabs";
+import { useState } from "react";
 
 export default function Comunidad() {
     const { articulos } = useNewsletter();
-
+    const [activeTab, setActiveTab] = useState("Noticias");
     return (
         <View style={styles.mainContainer}>
+            <StatsTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={["Noticias", "Mis noticias"]} />
+            {activeTab === "Noticias" && (<>
             <Text style={styles.title}>Noticias Ambientales</Text>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.container}>
@@ -18,7 +22,22 @@ export default function Comunidad() {
                         <Text style={styles.noDataText}>No hay noticias disponibles</Text>
                     )}
                 </View>
+            </ScrollView>   
+            </>)}
+            {activeTab === "Mis noticias" && (<>
+            <Text style={styles.title}>Mis noticias</Text>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.container}>
+                    {articulos.length > 0 ? (
+                        articulos.map((articulo: any, index: number) => (
+                            <InfoTips key={articulo.id} infotip={articulo} index={index} />
+                        ))
+                    ) : (
+                        <Text style={styles.noDataText}>No hay noticias disponibles</Text>
+                    )}
+                </View>
             </ScrollView>
+            </>)}
         </View>
     );
 }
