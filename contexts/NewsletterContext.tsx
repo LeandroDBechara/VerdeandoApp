@@ -33,7 +33,7 @@ export const NewsletterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [articulos]);
   const getArticulos = async () => {
-    const response = await fetch("https://verdeandoback.onrender.com/newsletter");
+    const response = await fetch("https://verdeandoback.onrender.com/news");
     const data = await response.json();
     setArticulos(data);
   };
@@ -42,7 +42,7 @@ export const NewsletterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     console.log("calculando relevancia");
     for (const articulo of articulos) {
     const horasDesdePublicacion = (Date.now() - new Date(articulo.fechaCreacion).getTime()) / 36e5;
-    articulo.relevancia = (articulo.views ) / (horasDesdePublicacion + 1);
+    articulo.relevancia = (articulo.views + 1) / (horasDesdePublicacion + 1);
   }
   setArticulos(articulos.sort((a: Articulo, b: Articulo) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()));
   }
