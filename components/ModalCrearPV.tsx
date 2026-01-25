@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { z } from "zod";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MapView from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import { ubicacion } from "./Mapa";
 import * as ImagePicker from "expo-image-picker";
 
@@ -34,9 +34,13 @@ export default function ModalCrearPV({
   const [selectedResiduos, setSelectedResiduos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [showResults, setShowResults] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [direccion, setDireccion] = useState("");
+  const [mapRegion, setMapRegion] = useState<{
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  } | null>(null);
+  const [direccionFromMap, setDireccionFromMap] = useState(""); // Dirección obtenida del mapa (solo para referencia, no se muestra en el campo)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const registerSchema = z.object({
@@ -56,6 +60,7 @@ export default function ModalCrearPV({
     handleSubmit,
     formState: { errors },
     setError,
+    setValue,
     watch,
     reset,
   } = useForm({
@@ -103,78 +108,184 @@ export default function ModalCrearPV({
     }
   };
 
-  const searchAddress = async (query: string) => {
-    if (query.length < 3) {
-      setSearchResults([]);
-      setShowResults(false);
+  // Efecto para resetear cuando se abre el modal
+  useEffect(() => {
+    if (ModalCreatePV) {
+      setDireccionFromMap(""); // Dirección obtenida del mapa (solo para mostrar en el marcador)
+      setCoordinates(null);
+      // Inicializar el mapa con la ubicación del usuario o una ubicación por defecto
+      setMapRegion({
+        latitude: ubicacion?.latitude || -26.815939568519156,
+        longitude: ubicacion?.longitude || -65.21566985440371,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
+    }
+  }, [ModalCreatePV]);
+
+  // Función para hacer reverse geocoding (obtener dirección desde coordenadas)
+  const reverseGeocode = async (lat: number, lng: number) => {
+    const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
+    if (!MAPBOX_TOKEN) {
+      console.error("Mapbox token no configurado");
       return;
     }
 
-
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query
-        )}&limit=5&countrycodes=ar&addressdetails=1&viewbox=${ubicacion ? 
-          `${ubicacion.longitude - 0.1},${ubicacion.latitude - 0.1},${ubicacion.longitude + 0.1},${ubicacion.latitude + 0.1}` : 
-          ''}&bounded=1`,
-        {
-          headers: {
-            Accept: "application/json",
-            "User-Agent": "VerdeandoApp/1.0",
-          },
-        }
-      );
+      const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${MAPBOX_TOKEN}&language=es`;
+      
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
-        setSearchResults(data);
-        setShowResults(true);
+        
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          const props = feature.properties || {};
+          const fullAddress = props.full_address || props.name || "Dirección no disponible";
+          
+          // Guardar la dirección obtenida del mapa (solo para mostrar en el marcador, NO actualiza el campo del formulario)
+          setDireccionFromMap(fullAddress);
+        } else {
+          // Si no se encuentra dirección, usar coordenadas como fallback
+          setDireccionFromMap(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        }
       } else {
-        setSearchResults([]);
-        setShowResults(false);
+        // Si falla la respuesta, usar coordenadas como dirección
+        setDireccionFromMap(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
       }
     } catch (error) {
-      console.error("Error al buscar dirección:", error);
-      setSearchResults([]);
-      setShowResults(false);
+      console.error("Error al hacer reverse geocoding:", error);
+      // Si falla, usar coordenadas como dirección
+      setDireccionFromMap(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddressSelect = (result: any) => {
-    setDireccion(result.display_name);
-    setCoordinates({
-      lat: parseFloat(result.lat),
-      lng: parseFloat(result.lon),
-    });
-    setShowResults(false);
-    setSearchResults([]);
-  };
-  // Efecto para obtener coordenadas cuando cambia la dirección
-  useEffect(() => {
-    if (ModalCreatePV) {
-      setDireccion("");
-      setSearchResults([]);
-      setShowResults(false);
+  // Función para manejar cuando el usuario toca el mapa
+  const handleMapPress = (event: any) => {
+    // El evento puede venir en diferentes formatos dependiendo de la versión de react-native-maps
+    const coordinate = event.nativeEvent?.coordinate || event.nativeEvent?.coordinatePoint || event.coordinate;
+    
+    if (!coordinate) {
+      console.error("No se pudo obtener las coordenadas del evento");
+      return;
     }
-  }, [ModalCreatePV]);
 
-  // Debounce para la búsqueda
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (direccion.trim()) {
-        searchAddress(direccion);
-      } else {
-        setSearchResults([]);
-        setShowResults(false);
+    const latitude = coordinate.latitude;
+    const longitude = coordinate.longitude;
+    
+    if (!latitude || !longitude) {
+      console.error("Coordenadas inválidas:", coordinate);
+      return;
+    }
+    
+    // Guardar coordenadas
+    setCoordinates({ lat: latitude, lng: longitude });
+    
+    // Actualizar región del mapa para enfocar en la ubicación seleccionada
+    setMapRegion({
+      latitude: latitude,
+      longitude: longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
+
+    // Hacer reverse geocoding para obtener la dirección
+    reverseGeocode(latitude, longitude);
+  };
+
+  // Función para geocodificar la dirección y mover el mapa (opcional, para búsqueda)
+  const geocodeAddress = async (addressText: string) => {
+    const text = addressText.trim();
+    
+    if (text.length < 3) {
+      setError("direccion", { message: "Por favor ingresa una dirección válida (mínimo 3 caracteres)" });
+      return;
+    }
+
+    const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
+    if (!MAPBOX_TOKEN) {
+      setError("direccion", { message: "Error de configuración: Token de Mapbox no encontrado" });
+      return;
+    }
+
+    setIsLoading(true);
+    setError("direccion", { message: "" });
+
+    try {
+      let mapboxUrl = `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(text)}&access_token=${MAPBOX_TOKEN}&limit=1&country=ar&language=es`;
+      
+      if (ubicacion) {
+        mapboxUrl += `&proximity=${ubicacion.longitude},${ubicacion.latitude}`;
       }
-    }, 500);
 
-    return () => clearTimeout(timeoutId);
-  }, [direccion]);
+      let response = await fetch(mapboxUrl, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (response.ok) {
+        let data = await response.json();
+        
+        if (!data.features || data.features.length === 0) {
+          let globalUrl = `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(text)}&access_token=${MAPBOX_TOKEN}&limit=1&language=es`;
+          
+          if (ubicacion) {
+            globalUrl += `&proximity=${ubicacion.longitude},${ubicacion.latitude}`;
+          }
+
+          response = await fetch(globalUrl, {
+            headers: {
+              Accept: "application/json",
+            },
+          });
+
+          if (response.ok) {
+            data = await response.json();
+          }
+        }
+
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          const coords = feature.geometry?.coordinates || [];
+          const longitude = coords[0];
+          const latitude = coords[1];
+
+          if (latitude && longitude) {
+            setCoordinates({ lat: latitude, lng: longitude });
+            
+            setMapRegion({
+              latitude: latitude,
+              longitude: longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+
+            // Hacer reverse geocoding para actualizar direccionFromMap (solo para mostrar en el marcador)
+            reverseGeocode(latitude, longitude);
+            
+            // NO actualizar el campo de dirección del formulario
+            // El campo de dirección permanece con lo que el usuario escribió
+          }
+        } else {
+          setError("direccion", { message: "No se encontró la dirección. Por favor, verifica que sea correcta." });
+        }
+      }
+    } catch (error) {
+      console.error("Error al geocodificar dirección:", error);
+      setError("direccion", { message: "Error de conexión. Por favor, verifica tu internet e intenta nuevamente." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleResiduo = (material: string) => {
     setSelectedResiduos((prev) => (prev.includes(material) ? prev.filter((r) => r !== material) : [...prev, material]));
@@ -221,7 +332,8 @@ export default function ModalCrearPV({
         reset();
         setSelectedResiduos([]);
         setCoordinates(null);
-        setDireccion("");
+        setMapRegion(null);
+        setDireccionFromMap("");
         setSelectedImage(null);
       }}
     >
@@ -260,56 +372,86 @@ export default function ModalCrearPV({
                     <Text style={styles.placeholder}>Dirección</Text>
                     <TextInput
                       style={styles.input}
-                      placeholder=""
+                      placeholder="Toca el mapa para seleccionar ubicación o busca una dirección"
                       keyboardType="default"
                       onBlur={onBlur}
                       onChangeText={(text) => {
                         onChange(text);
-                        setDireccion(text);
+                        // El campo de dirección es independiente, solo se actualiza cuando el usuario escribe
                       }}
                       value={value}
+                      editable={!isLoading}
                     />
-                    {isLoading && <Text style={styles.loadingText}>Buscando...</Text>}
+                  </View>
 
-                    {showResults && searchResults.length > 0 && (
-                      <View>
-                      <ScrollView style={styles.resultsContainer}>
-                        {searchResults.map((result, index) => (
-                          <TouchableOpacity
-                            key={index}
-                            style={styles.resultItem}
-                            onPress={() => handleAddressSelect(result)}
-                          >
-                            <Text style={styles.resultText} numberOfLines={2}>
-                              {result.display_name}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
+                  {/* Botón opcional para buscar dirección y mover el mapa */}
+                  {value && value.trim().length >= 3 && (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.geocodeButton,
+                        pressed && styles.geocodeButtonPressed,
+                        isLoading && styles.geocodeButtonDisabled
+                      ]}
+                      onPress={() => geocodeAddress(value)}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Text style={styles.geocodeButtonText}>Buscando...</Text>
+                      ) : (
+                        <Text style={styles.geocodeButtonText}>🔍 Buscar y Mover Mapa</Text>
+                      )}
+                    </Pressable>
+                  )}
+
+                  {/* Mapa interactivo - siempre visible */}
+                  <View style={styles.mapContainer}>
+                    <Text style={styles.mapInstructionText}>
+                      {coordinates ? "📍 Arrastra el marcador o toca el mapa para cambiar la ubicación" : "👆 Toca el mapa para colocar el marcador"}
+                    </Text>
+                    {mapRegion && (
                       <MapView
-                      style={styles.map}
-                      initialRegion={{
-                        latitude: ubicacion?.latitude || -26.815939568519156,
-                        longitude: ubicacion?.longitude || -65.21566985440371,
-                        latitudeDelta: 0.0922,
-                        longitudeDelta: 0.0421,
-                      }}
-                    />
-                      </View>
-                    )}
-                    
-
-                    {showResults && searchResults.length === 0 && !isLoading && (
-                      <Text style={styles.noResultsText}>No se encontraron resultados</Text>
+                        style={styles.map}
+                        region={mapRegion}
+                        onRegionChangeComplete={setMapRegion}
+                        onPress={handleMapPress}
+                        showsUserLocation={true}
+                      >
+                        {coordinates && (
+                          <Marker
+                            coordinate={{
+                              latitude: coordinates.lat,
+                              longitude: coordinates.lng,
+                            }}
+                            title="Ubicación del punto verde"
+                            description={direccionFromMap || "Ubicación seleccionada"}
+                            pinColor="green"
+                            draggable={true}
+                            onDragEnd={(e) => {
+                              const { latitude, longitude } = e.nativeEvent.coordinate;
+                              setCoordinates({ lat: latitude, lng: longitude });
+                              setMapRegion({
+                                latitude: latitude,
+                                longitude: longitude,
+                                latitudeDelta: 0.01,
+                                longitudeDelta: 0.01,
+                              });
+                              reverseGeocode(latitude, longitude);
+                            }}
+                          />
+                        )}
+                      </MapView>
                     )}
                   </View>
-                  {isLoading && <Text style={styles.loadingText}>Obteniendo coordenadas...</Text>}
+
+                  {/* Mostrar coordenadas si están disponibles */}
                   {coordinates && (
                     <View style={styles.coordinatesContainer}>
+                      <Text style={styles.coordinatesText}>✓ Ubicación seleccionada</Text>
                       <Text style={styles.coordinatesText}>Lat: {coordinates.lat.toFixed(6)}</Text>
                       <Text style={styles.coordinatesText}>Lng: {coordinates.lng.toFixed(6)}</Text>
                     </View>
                   )}
+
                   {errors.direccion && <Text style={styles.error}>{errors.direccion.message}</Text>}
                 </View>
               )}
@@ -415,12 +557,13 @@ export default function ModalCrearPV({
             <Pressable
               style={styles.cancelButton}
               onPress={() => {
-                      setModalCreatePV(false);
-      reset();
-      setSelectedResiduos([]);
-      setCoordinates(null);
-      setDireccion("");
-      setSelectedImage(null);
+                setModalCreatePV(false);
+                reset();
+                setSelectedResiduos([]);
+                setCoordinates(null);
+                setMapRegion(null);
+                setDireccionFromMap("");
+                setSelectedImage(null);
               }}
             >
               <Text style={styles.cancelButtonText}>Cancelar</Text>
@@ -539,6 +682,53 @@ const styles = StyleSheet.create({
     color: "#666",
     fontFamily: "monospace",
   },
+  geocodeButton: {
+    width: 300,
+    backgroundColor: "#2C7865",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  geocodeButtonPressed: {
+    opacity: 0.7,
+  },
+  geocodeButtonDisabled: {
+    backgroundColor: "#ccc",
+    opacity: 0.6,
+  },
+  geocodeButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  mapContainer: {
+    width: 300,
+    height: 250,
+    borderRadius: 10,
+    overflow: "hidden",
+    marginTop: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    position: "relative",
+  },
+  mapInstructionText: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    padding: 8,
+    borderRadius: 5,
+    fontSize: 12,
+    color: "#2C7865",
+    fontWeight: "bold",
+    zIndex: 1,
+    textAlign: "center",
+  },
   residuosSection: {
     width: 300,
     marginTop: 10,
@@ -576,9 +766,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
+    height: 250,
   },
   resultsContainer: {
     maxHeight: 200,
@@ -597,6 +785,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     lineHeight: 20,
+  },
+  resultItemWarning: {
+    backgroundColor: "#fff3cd",
+    borderLeftWidth: 3,
+    borderLeftColor: "#ffc107",
+  },
+  warningText: {
+    fontSize: 11,
+    color: "#856404",
+    marginTop: 4,
+    fontStyle: "italic",
   },
   noResultsText: {
     textAlign: "center",
