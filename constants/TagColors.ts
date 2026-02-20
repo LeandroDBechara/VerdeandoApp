@@ -1,8 +1,8 @@
 export const tagColor = (tag: string) => {
     switch (tag) {
-      case "Noticia":
+      case "Noticias":
         return "#2C7865";
-      case "Manualidad":
+      case "Manualidades":
         return "#007bff";
       default:
         return "#007bff";

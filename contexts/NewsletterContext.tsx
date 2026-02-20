@@ -1,20 +1,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useUser } from "./UserContext";
+
+const { user } = useUser();
+if (!user) {
+  throw new Error("useUser debe usarse dentro de UserProvider");
+}
 
 export interface Articulo {
   id: string;
   titulo: string;
   descripcion: string;
-  image: string;
+  imagen: string;
   url: string;
   tag: string;
   fechaCreacion: Date;
   views: number;
   relevancia?: number;
+  usuariosFav?: string[];
 }
 
 type NewsletterContextType = {
   articulos: Articulo[];
   getArticulos: () => Promise<void>;
+  agregarFavorito: (userId: string, newsId: string, news: Articulo) => Promise<void>;
+  eliminarFavorito: (userId: string, newsId: string) => Promise<void>;
 };
 
 export const NewsletterContext = createContext<NewsletterContextType | undefined>(undefined);
@@ -46,7 +55,38 @@ export const NewsletterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }
   setArticulos(articulos.sort((a: Articulo, b: Articulo) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()));
   }
-  return <NewsletterContext.Provider value={{ articulos, getArticulos }}>{children}</NewsletterContext.Provider>;
+  
+  const agregarFavorito = async (userId: string, newsId: string, news: Articulo) => {
+    await fetch("https://verdeandoback.onrender.com/news/add-to-favorite?userId="+userId+"&newsId="+newsId, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${user?.token}`, //token del usuario que esta agregando el favorito
+      },
+      body: JSON.stringify({
+        news: news,
+      }),
+    });
+  }
+
+  const eliminarFavorito = async ( userId: string, newsId: string) => {
+    const response = await fetch("https://verdeandoback.onrender.com/news/remove-from-favorite", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${user?.token}`, //token del usuario que esta eliminando el favorito
+      },
+      body: JSON.stringify({
+        userId: userId,
+        newsId: newsId,
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+    }
+  }
+  return <NewsletterContext.Provider value={{ articulos, getArticulos, agregarFavorito, eliminarFavorito }}>{children}</NewsletterContext.Provider>;
 };
 
 export const useNewsletter = () => {

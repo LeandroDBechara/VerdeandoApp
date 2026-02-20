@@ -16,7 +16,7 @@ export default function Comunidad() {
                 <View style={styles.container}>
                     {articulos.length > 0 ? (
                         articulos.map((articulo: any, index: number) => (
-                            <InfoTips key={articulo.id} infotip={articulo} index={index} />
+                            <InfoTips key={articulo.id} infotip={articulo} />
                         ))
                     ) : (
                         <Text style={styles.noDataText}>No hay noticias disponibles</Text>
@@ -30,7 +30,7 @@ export default function Comunidad() {
                 <View style={styles.container}>
                     {articulos.length > 0 ? (
                         articulos.map((articulo: any, index: number) => (
-                            <InfoTips key={articulo.id} infotip={articulo} index={index} />
+                            <InfoTips key={articulo.id} infotip={articulo} />
                         ))
                     ) : (
                         <Text style={styles.noDataText}>No hay noticias disponibles</Text>

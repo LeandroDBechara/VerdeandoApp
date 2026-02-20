@@ -9,7 +9,7 @@ export default function InfoTipsRate({ infotip }: { infotip: any }) {
         <FontAwesome6 name="tag" size={18} color="white" />
          <Text style={{ color: "white" }}>{infotip.tag}</Text>
          </View>
-      <Image source={{ uri: infotip.image }} style={styles.image} resizeMode="cover" />
+      <Image source={{ uri: infotip.imagen }} style={styles.image} resizeMode="cover" />
       <Text style={styles.title} numberOfLines={2}>{infotip.titulo}</Text>
       <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">{infotip.descripcion}</Text>
     </Pressable>
