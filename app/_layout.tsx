@@ -1,7 +1,10 @@
 import { useFonts } from "expo-font";
 import { router, SplashScreen, Stack, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Modal, StyleSheet, Text, TouchableOpacity, View, LogBox } from "react-native";
+
+// Suprimir warning de New Architecture (no-op en LayoutAnimation)
+LogBox.ignoreLogs(["setLayoutAnimationEnabledExperimental is currently a no-op"]);
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { PuntoVerdeProvider } from "@/contexts/PuntoVerdeContext";

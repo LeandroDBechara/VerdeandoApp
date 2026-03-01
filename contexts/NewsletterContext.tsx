@@ -1,10 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useUser } from "./UserContext";
-
-const { user } = useUser();
-if (!user) {
-  throw new Error("useUser debe usarse dentro de UserProvider");
-}
 
 export interface Articulo {
   id: string;
@@ -29,32 +24,35 @@ type NewsletterContextType = {
 export const NewsletterContext = createContext<NewsletterContextType | undefined>(undefined);
 
 export const NewsletterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useUser();
   const [articulos, setArticulos] = useState<Articulo[]>([]);
-  useEffect(() => {
-    getArticulos();
-    console.log("articulos obtenidos", articulos);
-  }, []);
-  
-  useEffect(() => {
-    if (articulos.length > 0) {
-      calcularRelevancia();
-      console.log("articulos con ordenados", articulos);
-    }
-  }, [articulos]);
+
   const getArticulos = async () => {
     const response = await fetch("https://verdeandoback.onrender.com/news");
     const data = await response.json();
     setArticulos(data);
   };
 
-  const calcularRelevancia = async () => {
-    console.log("calculando relevancia");
-    for (const articulo of articulos) {
-    const horasDesdePublicacion = (Date.now() - new Date(articulo.fechaCreacion).getTime()) / 36e5;
-    articulo.relevancia = (articulo.views + 1) / (horasDesdePublicacion + 1);
-  }
-  setArticulos(articulos.sort((a: Articulo, b: Articulo) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()));
-  }
+  const calcularRelevancia = useCallback(() => {
+    const conRelevancia = articulos.map((a) => ({
+      ...a,
+      relevancia: (a.views + 1) / ((Date.now() - new Date(a.fechaCreacion).getTime()) / 36e5 + 1),
+    }));
+    const ordenados = [...conRelevancia].sort(
+      (a, b) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()
+    );
+    setArticulos(ordenados);
+  }, [articulos]);
+
+  useEffect(() => {
+    getArticulos();
+  }, []);
+
+  useEffect(() => {
+    if (articulos.length > 0 && articulos.some((a) => a.relevancia === undefined)) {
+      calcularRelevancia();
+    }
+  }, [articulos, calcularRelevancia]);
   
   const agregarFavorito = async (userId: string, newsId: string, news: Articulo) => {
     await fetch("https://verdeandoback.onrender.com/news/add-to-favorite?userId="+userId+"&newsId="+newsId, {
