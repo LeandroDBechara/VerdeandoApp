@@ -133,7 +133,7 @@ export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) 
       console.log("Enviando FormData para actualizar punto verde");
 
       const res = await fetch(`${API_URL}/${id}/${user?.colaborador?.id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Authorization": `Bearer ${user?.token}`,
         },
@@ -157,7 +157,7 @@ export function PuntoVerdeProvider({ children }: { children: React.ReactNode }) 
   const eliminarPuntoVerde = async (id: string) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/${id}/${user?.colaborador?.id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${user?.token}`,
