@@ -10,52 +10,58 @@ import Constants from "expo-constants";
 WebBrowser.maybeCompleteAuthSession();
 
 export function BtnLoginGyF() {
-  // Obtener el scheme del app.json
+  // Scheme para OAuth: debe coincidir con app.config.js y estar registrado en
+  // Google Cloud Console y Facebook Developer Console como redirect URI
   const schemeValue = Constants.expoConfig?.scheme;
-  const scheme = typeof schemeValue === "string" 
-    ? schemeValue 
-    : Array.isArray(schemeValue) 
-    ? schemeValue[0] 
-    : "fb674819048296621";
-  
+  const scheme = typeof schemeValue === "string"
+    ? schemeValue
+    : Array.isArray(schemeValue)
+    ? schemeValue[0]
+    : "verdeandoapp";
+
+  const redirectUri = makeRedirectUri({
+    scheme,
+    path: "redirect",
+  });
+
   // Configuración de Google Auth
   const googleWebClientId = process.env.EXPO_PUBLIC_WEB_CLIENT;
   const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT;
   const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT;
-  
+
   const [requestGoogle, responseGoogle, promptAsyncGoogle] = Google.useAuthRequest({
     webClientId: googleWebClientId,
     androidClientId: googleAndroidClientId,
     iosClientId: googleIosClientId,
     scopes: ["openid", "profile", "email"],
-    redirectUri: makeRedirectUri({
-      scheme: scheme,
-    }),
+    redirectUri,
   });
 
   // Configuración de Facebook Auth
   const facebookAndroidClientId = process.env.EXPO_PUBLIC_FACEBOOK_ANDROID_CLIENT;
   const facebookIosClientId = process.env.EXPO_PUBLIC_FACEBOOK_IOS_CLIENT;
   const hasFacebookConfig = !!(facebookAndroidClientId || facebookIosClientId);
-  
-  // Configuración condicional de Facebook
+
   const facebookConfig = hasFacebookConfig
     ? {
         ...(facebookAndroidClientId && { androidClientId: facebookAndroidClientId }),
         ...(facebookIosClientId && { iosClientId: facebookIosClientId }),
-        redirectUri: makeRedirectUri({
-          scheme: scheme,
-        }),
+        redirectUri,
       }
     : {
         androidClientId: "0000000000000000",
         iosClientId: "0000000000000000",
-        redirectUri: makeRedirectUri({
-          scheme: scheme,
-        }),
+        redirectUri,
       };
-  
+
   const [requestFacebook, responseFacebook, promptAsyncFacebook] = Facebook.useAuthRequest(facebookConfig);
+
+  // Log del redirect URI para agregarlo en Google Cloud Console y Facebook Developer Console
+  useEffect(() => {
+    if (__DEV__) {
+      console.log("[OAuth] Redirect URI a registrar:", redirectUri);
+    }
+  }, [redirectUri]);
 
   const enviarTokenGoogle = useCallback(async (token: string) => {
     try {
