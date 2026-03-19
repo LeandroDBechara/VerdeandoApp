@@ -30,15 +30,15 @@ export default function Cupon({ recompensa }: { recompensa: Recompensa }) {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.nombre}>{recompensa.titulo}</Text>
-            <Image source={{ uri: recompensa.foto }} style={styles.imagen} resizeMode="contain" />
+            <Image source={{ uri: recompensa.foto }} style={styles.modalImage} resizeMode="contain" />
             <Text style={styles.descripcion}>{recompensa.descripcion}</Text>
             <Text style={styles.precio}>Puntos requeridos: {recompensa.puntos}</Text>
             <Text style={styles.cantidad}>Cantidad disponible: {recompensa.cantidad}</Text>
-          </View>
-          <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.botonCanjear} onPress={() => {setIsModalVisible(false); canjearRecompensa(recompensa.id || "")  }}>
-              <Text style={styles.textoBoton}>Canjear</Text>
-            </TouchableOpacity>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.botonCanjearModal} onPress={() => {setIsModalVisible(false); canjearRecompensa(recompensa.id || "")  }}>
+                <Text style={styles.textoBoton}>Canjear</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -128,13 +128,29 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 15,
+    width: "90%",
+    alignItems: "stretch",
   },
-  modalFooter: {
+  modalImage: {
+    width: "100%",
+    height: 180,
+    borderRadius: 8,
+    marginVertical: 12,
+  },
+  modalActions: {
+    width: "100%",
+    marginTop: 20,
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    justifyContent: "flex-end",
+  },
+  botonCanjearModal: {
+    backgroundColor: Colors.light.tint,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 120,
+    alignItems: "center",
   },
   descripcion: {
     fontSize: 14,

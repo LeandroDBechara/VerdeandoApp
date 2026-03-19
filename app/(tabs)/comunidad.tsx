@@ -3,10 +3,12 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNewsletter } from "@/contexts/NewsletterContext";
 import StatsTabs from "@/components/estadisticas/StatsTabs";
 import { useState } from "react";
+import { useUser } from "@/contexts/UserContext";
 
 export default function Comunidad() {
     const { articulos } = useNewsletter();
     const [activeTab, setActiveTab] = useState("Noticias");
+    const { user } = useUser();
     return (
         <View style={styles.mainContainer}>
             <StatsTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={["Noticias", "Mis noticias"]} />
@@ -28,8 +30,8 @@ export default function Comunidad() {
             <Text style={styles.title}>Mis noticias</Text>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.container}>
-                    {articulos.length > 0 ? (
-                        articulos.map((articulo: any, index: number) => (
+                    {user?.favNews?.length && user?.favNews?.length > 0 ? (
+                        user?.favNews?.map((articulo: any) => (
                             <InfoTips key={articulo.id} infotip={articulo} />
                         ))
                     ) : (

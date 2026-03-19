@@ -24,6 +24,7 @@ interface User {
   rol?: Role;
   comunidadId?: string;
   colaborador?: Colaborador;
+  favNews?: FavArticle[];
 }
 
 interface Colaborador {
@@ -34,6 +35,16 @@ interface Colaborador {
   fechaAlta?: string;
   fechaActualizacion?: string;
   usuarioId?: string;
+}
+interface FavArticle{
+  id: string;
+  titulo: string;
+  descripcion: string;
+  imagen: string;
+  url: string;
+  tag: string;
+  fechaCreacion: string;
+  views: number;
 }
 
 interface LoginCredentials {
@@ -108,7 +119,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const userData: User = {
         ...result.user,
         token: result.token.accessToken,
-        fotoPerfil: normalizePhotoUrl(result.user.fotoPerfil)
+        fotoPerfil: normalizePhotoUrl(result.user.fotoPerfil),
+        favNews: result.user.favNews,
       };
       
       console.log("Datos del usuario a guardar:", userData);
