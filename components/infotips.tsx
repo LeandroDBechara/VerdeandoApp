@@ -3,12 +3,15 @@ import { FontAwesome6, FontAwesome} from "@expo/vector-icons";
 import { tagColor } from "@/constants/TagColors";
 import { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUser } from "@/contexts/UserContext";
+import { useNewsletter } from "@/contexts/NewsletterContext";
 
 const FAVORITES_KEY = "favorite_news";
 
 export default function InfoTips({ infotip }: { infotip: any }) {
   const [isFavorite, setIsFavorite] = useState(false);
-
+  const { agregarFavorito, eliminarFavorito } = useNewsletter();
+  const { user } = useUser();
   useEffect(() => {
     checkIfFavorite();
   }, [infotip.id]);
@@ -33,8 +36,10 @@ export default function InfoTips({ infotip }: { infotip: any }) {
       
       if (isFavorite) {
         favoritesArray = favoritesArray.filter((id: any) => id !== infotip.id);
+        await eliminarFavorito(user?.id || "", infotip.id);
       } else {
         favoritesArray.push(infotip.id);
+        await agregarFavorito(user?.id || "", infotip.id, infotip);
       }
       
       await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(favoritesArray));

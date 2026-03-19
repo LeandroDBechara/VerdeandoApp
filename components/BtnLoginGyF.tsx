@@ -12,17 +12,18 @@ WebBrowser.maybeCompleteAuthSession();
 export function BtnLoginGyF() {
   // Scheme para OAuth: debe coincidir con app.config.js y estar registrado en
   // Google Cloud Console y Facebook Developer Console como redirect URI
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || "https://verdeandoback.onrender.com";
+  // Usar redirect vía backend (Google solo acepta URLs https://)
+  const googleRedirectUri = `${apiUrl}/auth/google/callback`;
+
+  // Para Facebook se puede usar el scheme directo
   const schemeValue = Constants.expoConfig?.scheme;
   const scheme = typeof schemeValue === "string"
     ? schemeValue
     : Array.isArray(schemeValue)
     ? schemeValue[0]
     : "verdeandoapp";
-
-  const redirectUri = makeRedirectUri({
-    scheme,
-    path: "redirect",
-  });
+  const facebookRedirectUri = makeRedirectUri({ scheme, path: "redirect" });
 
   // Configuración de Google Auth
   const googleWebClientId = process.env.EXPO_PUBLIC_WEB_CLIENT;
@@ -34,7 +35,7 @@ export function BtnLoginGyF() {
     androidClientId: googleAndroidClientId,
     iosClientId: googleIosClientId,
     scopes: ["openid", "profile", "email"],
-    redirectUri,
+    redirectUri: googleRedirectUri,
   });
 
   // Configuración de Facebook Auth
@@ -46,22 +47,23 @@ export function BtnLoginGyF() {
     ? {
         ...(facebookAndroidClientId && { androidClientId: facebookAndroidClientId }),
         ...(facebookIosClientId && { iosClientId: facebookIosClientId }),
-        redirectUri,
+        redirectUri: facebookRedirectUri,
       }
     : {
         androidClientId: "0000000000000000",
         iosClientId: "0000000000000000",
-        redirectUri,
+        redirectUri: facebookRedirectUri,
       };
 
   const [requestFacebook, responseFacebook, promptAsyncFacebook] = Facebook.useAuthRequest(facebookConfig);
 
-  // Log del redirect URI para agregarlo en Google Cloud Console y Facebook Developer Console
+  // Log de los redirect URIs para registrar en las consolas OAuth
   useEffect(() => {
     if (__DEV__) {
-      console.log("[OAuth] Redirect URI a registrar:", redirectUri);
+      console.log("[OAuth] Google redirect URI:", googleRedirectUri);
+      console.log("[OAuth] Facebook redirect URI:", facebookRedirectUri);
     }
-  }, [redirectUri]);
+  }, [googleRedirectUri, facebookRedirectUri]);
 
   const enviarTokenGoogle = useCallback(async (token: string) => {
     try {
