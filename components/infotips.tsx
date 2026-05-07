@@ -39,7 +39,7 @@ export default function InfoTips({ infotip }: { infotip: any }) {
         await eliminarFavorito(user?.id || "", infotip.id);
       } else {
         favoritesArray.push(infotip.id);
-        await agregarFavorito(user?.id || "", infotip.id, infotip);
+        await agregarFavorito(user?.id || "", infotip);
       }
       
       await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(favoritesArray));

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useRouter } from 'expo-router';
 import { normalizePhotoUrl } from '@/scripts/normalizePhotoUrl';
+import { Articulo } from './NewsletterContext';
 
 enum Role {
   ADMIN = 'ADMIN',
@@ -24,7 +25,7 @@ interface User {
   rol?: Role;
   comunidadId?: string;
   colaborador?: Colaborador;
-  favNews?: FavArticle[];
+  favNews?: Articulo[];
 }
 
 interface Colaborador {
@@ -35,16 +36,6 @@ interface Colaborador {
   fechaAlta?: string;
   fechaActualizacion?: string;
   usuarioId?: string;
-}
-interface FavArticle{
-  id: string;
-  titulo: string;
-  descripcion: string;
-  imagen: string;
-  url: string;
-  tag: string;
-  fechaCreacion: string;
-  views: number;
 }
 
 interface LoginCredentials {
@@ -69,6 +60,8 @@ interface UserContextType {
   updateUser: (userData: User) => Promise<void>;
   updateColaborador: (colaboradorData: any) => Promise<void>;
   refreshUser: () => Promise<void>;
+  addFavNews: (noticia: Articulo) => Promise<void>;
+  removeFavNews: (newsId: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -308,14 +301,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       console.log("Usuario : ", user);
     }
   };
+  const addFavNews = async (noticia: Articulo) => {
+    setUser({ ...user, favNews: [...(user?.favNews || []), noticia] });
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+  }
+  const removeFavNews = async (newsId: string) => {
+    setUser({ ...user, favNews: user?.favNews?.filter((n) => n.id !== newsId) });
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+  }
 
   return (
-    <UserContext.Provider value={{ user, setUser, login, register, logout, updateUser, updateColaborador, refreshUser }}>
+    <UserContext.Provider value={{ user, setUser, login, register, logout, updateUser, updateColaborador, refreshUser, addFavNews, removeFavNews }}>
       {children}
     </UserContext.Provider>
   );
 }
-
 
 
 export function useUser() {

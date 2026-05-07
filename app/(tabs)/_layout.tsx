@@ -21,12 +21,15 @@ export default function TabLayout() {
       pathname === "/" ? (
         null
       ) : (
+        <View>
         <TouchableOpacity 
           onPress={() => router.back()}
           style={{ marginLeft: 16, marginRight: 5 }}
         >
           <FontAwesome6 name="arrow-left" size={20} color="green" />
+          
         </TouchableOpacity>
+        </View>
       )
     );
   }

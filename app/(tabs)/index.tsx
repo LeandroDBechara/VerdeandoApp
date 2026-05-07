@@ -17,7 +17,7 @@ export default function Home() {
             <View style={styles.header}>
                 <Text style={styles.headerText}>Puntos: {user?.puntos}</Text>
                 <Text style={styles.headerText}>Residuos reciclados: {getResiduosReciclados()} kg</Text>
-                <Text style={styles.headerText}>Este mensaje fachero saldra de una lista: Eres el reciclaneito 😎</Text>
+                <Text style={styles.headerText}>Eres el reciclaneito 😎</Text>
                 
             </View>
             </View>

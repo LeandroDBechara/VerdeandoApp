@@ -48,7 +48,7 @@ export default function Login() {
         <Image source={require("@/assets/images/logoVerdeando.png")} resizeMode="contain" style={{ width: 240, height: 50 }} />
         <Text style={styles.title}>Iniciar sesión</Text> 
         
-        <BtnLoginGyF />
+        
        <View>
         <Controller
           control={control}

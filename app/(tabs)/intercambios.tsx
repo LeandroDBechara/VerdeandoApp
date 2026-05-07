@@ -43,7 +43,7 @@ export default function Intercambios() {
     try {
       await addIntercambio({
         usuarioId: user?.id || "",
-        codigoCupon: codigo,
+        codigoCupon: codigo || "",
         detalleIntercambio : residuosSeleccionados.map((r) => ({
           residuo: residuos?.find((res) => res.id === r.residuoId) || {
             id: r.residuoId,

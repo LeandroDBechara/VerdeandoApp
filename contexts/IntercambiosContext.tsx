@@ -147,7 +147,7 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log(nuevo);
     const dataIntercambio = {
       usuarioId: user?.id,
-      codigoCupon: nuevo.codigoCupon,
+      codigoCupon: nuevo.codigoCupon || "",
       detalles: nuevo.detalleIntercambio?.map((detalle) => ({
         residuoId: typeof detalle.residuo === "string" ? detalle.residuo : detalle.residuo?.id,
         pesoGramos: detalle.pesoGramos,

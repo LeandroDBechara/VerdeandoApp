@@ -35,7 +35,7 @@ export default function Comunidad() {
                             <InfoTips key={articulo.id} infotip={articulo} />
                         ))
                     ) : (
-                        <Text style={styles.noDataText}>No hay noticias disponibles</Text>
+                        <Text style={styles.noDataText}>aun no agregaste ninguna noticia a tus favoritos</Text>
                     )}
                 </View>
             </ScrollView>
