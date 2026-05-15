@@ -3,6 +3,7 @@ import { useUser } from "./UserContext";
 import * as Location from "expo-location";
 import { usePuntoVerde } from "./PuntoVerdeContext";
 import { ImageSourcePropType } from "react-native";
+
 export interface Intercambio {
   id?: string;
   pesoTotal?: number;  
@@ -37,12 +38,37 @@ export interface Intercambio {
   } | null;
 };
 
+const iconoPorDefecto = require("@/assets/icons/papel.png");
+
 export const residuosIconos = {
   "Papel": require("@/assets/icons/papel.png"),
   "Madera": require("@/assets/icons/madera.png"),
   "Plástico": require("@/assets/icons/plastico.png"),
   "Vidrio": require("@/assets/icons/vidrio.png"),
   "Aluminio": require("@/assets/icons/lata.png"),
+  "Carton": require("@/assets/icons/paquete.png"),
+  "Orgánico": require("@/assets/icons/manzana.png"),
+  "Textil": require("@/assets/icons/camiseta-de-manga-corta.png"),
+  "Metales": require("@/assets/icons/tuerca.png"),
+} as const;
+
+export function getResiduoIcon(material?: string): ImageSourcePropType {
+  if (!material) return iconoPorDefecto;
+  return residuosIconos[material as keyof typeof residuosIconos] ?? iconoPorDefecto;
+}
+
+export function enrichResiduo(residuo: Residuo): Residuo {
+  return { ...residuo, icon: getResiduoIcon(residuo.material) };
+}
+
+function enrichIntercambio(intercambio: Intercambio): Intercambio {
+  return {
+    ...intercambio,
+    detalleIntercambio: intercambio.detalleIntercambio?.map((detalle) => ({
+      ...detalle,
+      residuo: detalle.residuo ? enrichResiduo(detalle.residuo) : detalle.residuo,
+    })) ?? [],
+  };
 }
 
 interface DetalleIntercambio{
@@ -99,14 +125,7 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const data = await response.json();
       
       if (Array.isArray(data)) {
-        data.forEach((intercambio: Intercambio) => {
-          intercambio.detalleIntercambio?.forEach((detalle: DetalleIntercambio) => {
-            if(detalle.residuo){
-              detalle.residuo.icon = residuosIconos[detalle.residuo?.material as keyof typeof residuosIconos] || require("@/assets/icons/papel.png");
-            }
-          });
-        });
-        setIntercambios(data);
+        setIntercambios(data.map(enrichIntercambio));
       } else {
         console.error("La respuesta de la API no es un array:", data);
         setIntercambios([]);
@@ -128,10 +147,7 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const data = await response.json();
       
       if (Array.isArray(data)) {
-        data.forEach((residuo: Residuo) => {
-          residuo.icon = residuosIconos[residuo.material as keyof typeof residuosIconos] || require("@/assets/icons/papel.png");
-        });
-        setResiduos(data);
+        setResiduos(data.map(enrichResiduo));
       } else {
         console.error("La respuesta de residuos no es un array:", data);
         setResiduos([]);
@@ -166,7 +182,7 @@ export const IntercambiosProvider: React.FC<{ children: React.ReactNode }> = ({ 
       throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
     }
     const data = await response.json();
-    setIntercambios((prev) => [...prev, data]);
+    setIntercambios((prev) => [...prev, enrichIntercambio(data)]);
   };
 
   const confirmarIntercambio = async (token:string)=>{

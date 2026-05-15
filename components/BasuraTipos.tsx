@@ -1,11 +1,11 @@
-import { Residuo } from "@/contexts/IntercambiosContext";
-import { FontAwesome6 } from "@expo/vector-icons";
-import { Pressable, Text, StyleSheet, ImageSourcePropType, Image } from "react-native";
+import { Residuo, getResiduoIcon } from "@/contexts/IntercambiosContext";
+import { Pressable, Text, StyleSheet, Image } from "react-native";
     
 export default function BasuraTipos ({ residuo, selected, setSelected }: { residuo: Residuo, selected: boolean, setSelected: () => void }) {
+    const icon = getResiduoIcon(residuo.material);
     return (
         <Pressable onPress={setSelected} style={[styles.interestingButton, { backgroundColor: selected ? "lightgreen" : "white" }]}>
-            <Image source={residuo.icon} style={{ width: 24, height: 24, resizeMode: "contain" }} />
+            <Image source={icon} style={{ width: 24, height: 24, resizeMode: "contain" }} />
             <Text>{residuo.material}</Text>
         </Pressable>    
     );
