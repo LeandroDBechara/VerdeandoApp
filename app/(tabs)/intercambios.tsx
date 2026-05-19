@@ -70,9 +70,9 @@ export default function Intercambios() {
       <ScrollView style={styles.scrollView}>
         {activeTab === "Realizados" && (
           <>
-            <BarGraph intercambios={intercambios} />
+            <BarGraph intercambios={intercambios.filter((intercambio) => intercambio.estado === "REALIZADO" )} />
             {intercambios.map((intercambio) => (
-              intercambio.estado === "REALIZADO" && (
+              intercambio.estado === "REALIZADO" && new Date(intercambio.fechaRealizado || "") < new Date(new Date().setDate(new Date().getDate() + 30)) && (
                 <Intercambio key={intercambio.id} intercambio={intercambio} />
               )
             ))}
