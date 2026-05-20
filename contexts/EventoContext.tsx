@@ -11,7 +11,7 @@ export interface Evento {
   fechaFin?: Date;
   codigo?: string;
   multiplicador?: number;
-  puntosVerdesPermitidos?: string[];
+  puntosVerdesPermitidos?: (string | { id?: string; nombre?: string })[];
 }
 
 type EventoContextType = {
