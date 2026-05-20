@@ -80,7 +80,7 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: true,
           tabBarActiveTintColor: "green",
-          tabBarInactiveTintColor: "lightgray",
+          tabBarInactiveTintColor: "#000000",
           tabBarActiveBackgroundColor: "lightgreen",
           headerLeft: renderHeaderLeft,
           headerRight: renderHeaderRight,
@@ -93,7 +93,7 @@ export default function TabLayout() {
             fontWeight: 'bold',
           },
           tabBarLabelStyle:{
-            fontSize: 9.9,
+            fontSize: 7.9,
             fontWeight: "bold",
           },
           tabBarStyle: Platform.select({
@@ -151,6 +151,14 @@ export default function TabLayout() {
             title: "Comunidad",
             tabBarIcon: ({ color }) => <FontAwesome6 name="user-group" size={24} color={color} />,
             tabBarLabel: "Comunidad",
+          }}
+        />
+        <Tabs.Screen
+          name="leaderboards"
+          options={{
+            title: "Ranking",
+            tabBarIcon: ({ color }) => <FontAwesome6 name="trophy" size={24} color={color} />,
+            tabBarLabel: "Ranking",
           }}
         />
       </Tabs>

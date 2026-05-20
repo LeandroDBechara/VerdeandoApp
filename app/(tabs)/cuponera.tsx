@@ -1,16 +1,19 @@
 import { ScrollView, View, Text } from "react-native";
 import Cupon from "@/components/Cupon";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRecompensas } from "@/contexts/RecompensaContext";
+import { useUser } from "@/contexts/UserContext";
 import StatsTabs from "@/components/estadisticas/StatsTabs";
 import Canje from "@/components/Canje";
 import { StyleSheet } from "react-native";
 
 export default function Cuponera() {
-    const {recompensas, canjes} = useRecompensas();
+    const { recompensas, canjes } = useRecompensas();
+    const { user } = useUser();
     const [activeTab, setActiveTab] = useState("Cupones");
     return (
-        <View>
+        <View style={styles.container}>
+            <Text style={styles.pointsText}>Puntos: {user?.puntos ?? 0}</Text>
             <StatsTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={["Cupones", "Canjes"]} />
             <ScrollView>
                 {activeTab === "Cupones" && (
@@ -38,6 +41,18 @@ export default function Cuponera() {
     );
 }
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#fff",
+    },
+    pointsText: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "green",
+        paddingHorizontal: 15,
+        paddingTop: 12,
+        paddingBottom: 4,
+    },
     noDataText: {
         fontSize: 16,
         fontWeight: "bold",

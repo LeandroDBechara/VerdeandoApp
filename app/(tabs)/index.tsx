@@ -16,8 +16,7 @@ export default function Home() {
             <Image source={require("@/assets/images/chica-planta.png")} style={styles.headerImage} resizeMode="contain" />
             <View style={styles.header}>
                 <Text style={styles.headerText}>Puntos: {user?.puntos}</Text>
-                <Text style={styles.headerText}>Residuos reciclados: {getResiduosReciclados()} kg</Text>
-                <Text style={styles.headerText}>Eres el reciclaneito 😎</Text>
+                <Text style={styles.headerText}>Reciclados: {getResiduosReciclados()} kg</Text>
                 
             </View>
             </View>
