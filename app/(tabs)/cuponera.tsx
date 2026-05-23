@@ -15,7 +15,7 @@ export default function Cuponera() {
         <View style={styles.container}>
             <Text style={styles.pointsText}>Puntos: {user?.puntos ?? 0}</Text>
             <StatsTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={["Cupones", "Canjes"]} />
-            <ScrollView>
+            <ScrollView style={styles.scrollView}>
                 {activeTab === "Cupones" && (
                     <View>
                         {recompensas.map((recompensa)=>(
@@ -44,6 +44,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
+    },
+    scrollView: {
+        padding:10,
+        marginBottom: 50,
     },
     pointsText: {
         fontSize: 20,

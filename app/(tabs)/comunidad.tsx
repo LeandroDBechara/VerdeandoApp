@@ -12,9 +12,10 @@ export default function Comunidad() {
     return (
         <View style={styles.mainContainer}>
             <StatsTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={["Noticias", "Mis noticias"]} />
+            <ScrollView style={styles.scrollContent}>
             {activeTab === "Noticias" && (<>
             <Text style={styles.title}>Noticias Ambientales</Text>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            
                 <View style={styles.container}>
                     {articulos.length > 0 ? (
                         articulos.map((articulo: any, index: number) => (
@@ -24,11 +25,11 @@ export default function Comunidad() {
                         <Text style={styles.noDataText}>No hay noticias disponibles</Text>
                     )}
                 </View>
-            </ScrollView>   
+           
             </>)}
             {activeTab === "Mis noticias" && (<>
             <Text style={styles.title}>Mis noticias</Text>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            
                 <View style={styles.container}>
                     {user?.favNews?.length && user?.favNews?.length > 0 ? (
                         user?.favNews?.map((articulo: any) => (
@@ -38,8 +39,8 @@ export default function Comunidad() {
                         <Text style={styles.noDataText}>aun no agregaste ninguna noticia a tus favoritos</Text>
                     )}
                 </View>
-            </ScrollView>
             </>)}
+            </ScrollView>
         </View>
     );
 }
@@ -59,14 +60,15 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     scrollContent: {
-        paddingBottom: 20,
+        paddingHorizontal: 10,
+        marginBottom: 50,
     },
     container: {
         flex: 1,
         flexDirection: "row",
         flexWrap: "wrap",
         justifyContent: "space-between",
-        padding: 10,
+        paddingVertical: 10,
         gap: 10,
     },
     noDataText: {

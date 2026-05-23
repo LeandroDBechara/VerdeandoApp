@@ -20,7 +20,7 @@ export default function Home() {
                 
             </View>
             </View>
-            <Text style={styles.headerText}>Eventos</Text>
+            <Text style={styles.sectionTitle}>Eventos</Text>
             <ScrollView style={styles.scrollView}>
             {eventos.map((evento:EventoType)=>(
                 <Evento key={evento.id} evento={evento} />
@@ -71,6 +71,14 @@ const styles = StyleSheet.create({
     scrollView: {
   
         padding: 10,
-        marginBottom: 60,
+        marginBottom: 50,
+    },
+    sectionTitle: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "green",
+        textAlign: "left",
+        padding: 10,
+        marginLeft: 10,
     },
 });

@@ -10,6 +10,7 @@ import { EventoProvider } from "@/contexts/EventoContext";
 import { RecompensaProvider } from "@/contexts/RecompensaContext";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { NewsletterProvider } from "@/contexts/NewsletterContext";
+import { LeaderboardsProvider } from "@/contexts/LeaderboardsContext";
 
 const EMAIL_COLABORAR = "verdeando.dodogames@gmail.com";
 const ALIAS_DONACION = "verdeando.donar"; // Reemplazar por el alias real si aplica
@@ -201,7 +202,9 @@ export default function RootLayout() {
             <EventoProvider>
               <RecompensaProvider>
                 <NewsletterProvider>
-                  <RootLayoutNav />
+                  <LeaderboardsProvider>
+                    <RootLayoutNav />
+                  </LeaderboardsProvider>
                 </NewsletterProvider>
               </RecompensaProvider>
             </EventoProvider>

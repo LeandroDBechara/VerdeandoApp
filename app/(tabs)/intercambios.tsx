@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   scrollView: {
-    flex: 1,
+    padding: 10,
     marginBottom: 50,
   },
   addButton: {

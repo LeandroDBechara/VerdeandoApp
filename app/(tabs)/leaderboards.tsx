@@ -1,9 +1,84 @@
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Image } from "react-native";
 import { useUser } from "@/contexts/UserContext";
+import TablaRanking from "@/components/TablaRanking";
+import { datos, useLeaderBoards } from "@/contexts/LeaderboardsContext";
+import { getResiduoIcon } from "@/contexts/IntercambiosContext";
+
+
 
 export default function Leaderboards() {
   const { user } = useUser();
+  const { getUsuariosConMasPuntos, getUsuariosQueMasReciclaron, getTuMaterialMasReciclado, getUsuariosQueMasEventosParticiparon, } = useLeaderBoards();
+  const [usuariosConMasPuntos, setUsuariosConMasPuntos] = useState<datos[]>([]);
+  const [usuariosQueMasReciclaron, setUsuariosQueMasReciclaron] = useState<datos[]>([]);
+  const [usuariosQueMasEventosParticiparon, setUsuariosQueMasEventosParticiparon] = useState<datos[]>([]);
+  const [tuMaterialMasReciclado, setTuMaterialMasReciclado] = useState<datos | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const icon = getResiduoIcon(tuMaterialMasReciclado?.nombre ?? "");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const cargarLeaderboards = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const [puntos, reciclaje, eventos, material] = await Promise.all([
+          getUsuariosConMasPuntos(),
+          getUsuariosQueMasReciclaron(),
+          getUsuariosQueMasEventosParticiparon(),
+          getTuMaterialMasReciclado(user?.id ?? ""),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setUsuariosConMasPuntos(Array.isArray(puntos) ? puntos : []);
+        setUsuariosQueMasReciclaron(Array.isArray(reciclaje) ? reciclaje : []);
+        setUsuariosQueMasEventosParticiparon(Array.isArray(eventos) ? eventos : []);
+        setTuMaterialMasReciclado(material?.nombre ? material : null);
+      } catch {
+        if (isMounted) {
+          setError("No pudimos cargar el ranking en este momento.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    cargarLeaderboards();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    getTuMaterialMasReciclado,
+    getUsuariosConMasPuntos,
+    getUsuariosQueMasEventosParticiparon,
+    getUsuariosQueMasReciclaron,
+    user?.id,
+  ]);
+
+  const noHayDatos = useMemo(() => {
+    return (
+      usuariosConMasPuntos.length === 0
+      && usuariosQueMasReciclaron.length === 0
+      && usuariosQueMasEventosParticiparon.length === 0
+      && !tuMaterialMasReciclado
+    );
+  }, [
+    tuMaterialMasReciclado,
+    usuariosConMasPuntos.length,
+    usuariosQueMasEventosParticiparon.length,
+    usuariosQueMasReciclaron.length,
+  ]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -16,10 +91,61 @@ export default function Leaderboards() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Tu progreso</Text>
         <Text style={styles.points}>{user?.puntos ?? 0} puntos</Text>
-        <Text style={styles.hint}>
-          La clasificación global estará disponible pronto.
-        </Text>
+        <Text style={styles.hint}>Mira como venis frente a la comunidad.</Text>
       </View>
+
+      {isLoading && (
+        <View style={styles.statusCard}>
+          <ActivityIndicator size="large" color="#2C7865" />
+          <Text style={styles.statusText}>Cargando ranking...</Text>
+        </View>
+      )}
+
+      {!isLoading && error && (
+        <View style={styles.statusCard}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      {!isLoading && !error && noHayDatos && (
+        <View style={styles.statusCard}>
+          <Text style={styles.statusText}>Todavia no hay datos de ranking para mostrar.</Text>
+        </View>
+      )}
+
+      {!isLoading && !error && !noHayDatos && (
+        <>
+          {tuMaterialMasReciclado && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Tu material mas reciclado</Text>
+              <Text style={styles.materialName}>{tuMaterialMasReciclado.nombre}</Text>
+              <Image source={icon} style={{ width: 24, height: 24, resizeMode: "contain" }} />
+              <Text style={styles.materialValue}>{tuMaterialMasReciclado.valor} g</Text>
+            </View>
+          )}
+
+          {usuariosConMasPuntos.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Usuarios con mas puntos</Text>
+              <TablaRanking datos={usuariosConMasPuntos} unidad="pts" />
+            </View>
+          )}
+
+          {usuariosQueMasReciclaron.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Usuarios que mas reciclaron</Text>
+              <TablaRanking datos={usuariosQueMasReciclaron} unidad="g" />
+            </View>
+          )}
+
+          {usuariosQueMasEventosParticiparon.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Usuarios con mas eventos</Text>
+              <TablaRanking datos={usuariosQueMasEventosParticiparon} unidad="eventos" />
+            </View>
+          )}
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -52,9 +178,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
-    alignItems: "center",
     borderWidth: 1,
     borderColor: "#e0e0e0",
+    marginBottom: 12,
   },
   cardTitle: {
     fontSize: 18,
@@ -72,5 +198,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888",
     textAlign: "center",
+  },
+  statusCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusText: {
+    fontSize: 15,
+    color: "#666",
+    textAlign: "center",
+  },
+  errorText: {
+    fontSize: 15,
+    color: "#B3261E",
+    textAlign: "center",
+  },
+  materialName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#2C7865",
+    marginBottom: 4,
+  },
+  materialValue: {
+    fontSize: 16,
+    color: "#444",
+    fontWeight: "600",
   },
 });
