@@ -16,7 +16,7 @@ export default function ModalDetallePuntoVerde({modalPVVisible, setModalPVVisibl
                 <Text style={styles.direccion}><Ionicons name="location" size={20} color="#2C7865"  /> {modalPVVisible[1]?.direccion}</Text>
                 <Text style={styles.diasHorarioAtencion}><Ionicons name="calendar" size={20} color="#2C7865" /> {modalPVVisible[1]?.diasHorarioAtencion}</Text>
                 <Image source={{ uri: modalPVVisible[1]?.imagen }} style={styles.image} resizeMode="cover" /> 
-                <Text style={styles.residuosAceptados}>{modalPVVisible[1]?.residuosAceptados?.join(", ")}</Text>
+                <Text style={styles.residuosAceptados}>Residuos aceptados: {modalPVVisible[1]?.residuosAceptados?.join(", ")}</Text>
                 </ScrollView>
                  <Pressable style={styles.button} onPress={() => setModalPVVisible([false, null])}>
                     <Text style={styles.buttonText}>Cerrar</Text>
