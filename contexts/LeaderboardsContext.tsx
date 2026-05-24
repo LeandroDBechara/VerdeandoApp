@@ -1,15 +1,18 @@
 import { createContext, useContext } from "react";
 import { useUser } from "./UserContext";
+import { getResiduoIcon } from "./IntercambiosContext";
+import { ImageSourcePropType } from "react-native";
 
 export interface datos {
   nombre: string;
   valor: number;
+  icono?: ImageSourcePropType;
 }
 
 type LeaderboardsContextType = {
   getUsuariosConMasPuntos: () => Promise<datos[]>;
   getUsuariosQueMasReciclaron: () => Promise<datos[]>;
-  getTuMaterialMasReciclado: (usuarioId: string) => Promise<datos>;
+  getTuMaterialMasReciclado: (usuarioId: string) => Promise<datos[]>;
   getUsuariosQueMasEventosParticiparon: () => Promise<datos[]>;
 };
 
@@ -23,7 +26,6 @@ const { user } = useUser();
     try {
       const response = await fetch("https://verdeandoback.onrender.com/estadisticas/usuarios-mas-puntos");
       const data = await response.json();
-      console.log("Usuarios con más puntos:", data);
       return data;
     } catch (error) {
       console.error("Error al obtener usuarios con más puntos:", error);
@@ -34,7 +36,6 @@ const { user } = useUser();
     try {
       const response = await fetch("https://verdeandoback.onrender.com/estadisticas/usuarios-mas-reciclaron");
       const data = await response.json();
-      console.log("Usuarios que más reciclaron:", data);
       return data
     } catch (error) {
       console.error("Error al obtener usuarios que más reciclaron:", error);
@@ -48,10 +49,10 @@ const { user } = useUser();
       );
       const data = await response.json();
       console.log("Tu material más reciclado:", data);
-      return data
+      return data;
     } catch (error) {
       console.error("Error al obtener tu material más reciclado:", error);
-      return { nombre: "", valor: 0 };
+      return [];
     }
   };
   const getUsuariosQueMasEventosParticiparon = async () => {

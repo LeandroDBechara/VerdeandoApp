@@ -5,6 +5,7 @@ import { useUser } from "@/contexts/UserContext";
 import TablaRanking from "@/components/TablaRanking";
 import { datos, useLeaderBoards } from "@/contexts/LeaderboardsContext";
 import { getResiduoIcon } from "@/contexts/IntercambiosContext";
+import TablaMaterial from "@/components/TablaMaterial";
 
 
 
@@ -14,10 +15,14 @@ export default function Leaderboards() {
   const [usuariosConMasPuntos, setUsuariosConMasPuntos] = useState<datos[]>([]);
   const [usuariosQueMasReciclaron, setUsuariosQueMasReciclaron] = useState<datos[]>([]);
   const [usuariosQueMasEventosParticiparon, setUsuariosQueMasEventosParticiparon] = useState<datos[]>([]);
-  const [tuMaterialMasReciclado, setTuMaterialMasReciclado] = useState<datos | null>(null);
+  const [tuMaterialMasReciclado, setTuMaterialMasReciclado] = useState<datos[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const icon = getResiduoIcon(tuMaterialMasReciclado?.nombre ?? "");
+  const materiaIcon = tuMaterialMasReciclado.map((item) => ({
+    nombre: item.nombre,
+    valor: item.valor,
+    icono: getResiduoIcon(item.nombre),
+  }));
 
   useEffect(() => {
     let isMounted = true;
@@ -41,7 +46,7 @@ export default function Leaderboards() {
         setUsuariosConMasPuntos(Array.isArray(puntos) ? puntos : []);
         setUsuariosQueMasReciclaron(Array.isArray(reciclaje) ? reciclaje : []);
         setUsuariosQueMasEventosParticiparon(Array.isArray(eventos) ? eventos : []);
-        setTuMaterialMasReciclado(material?.nombre ? material : null);
+        setTuMaterialMasReciclado(Array.isArray(material) ? material : []);
       } catch {
         if (isMounted) {
           setError("No pudimos cargar el ranking en este momento.");
@@ -71,7 +76,7 @@ export default function Leaderboards() {
       usuariosConMasPuntos.length === 0
       && usuariosQueMasReciclaron.length === 0
       && usuariosQueMasEventosParticiparon.length === 0
-      && !tuMaterialMasReciclado
+      && tuMaterialMasReciclado.length === 0
     );
   }, [
     tuMaterialMasReciclado,
@@ -115,12 +120,10 @@ export default function Leaderboards() {
 
       {!isLoading && !error && !noHayDatos && (
         <>
-          {tuMaterialMasReciclado && (
+          {tuMaterialMasReciclado.length > 0 && (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Tu material mas reciclado</Text>
-              <Text style={styles.materialName}>{tuMaterialMasReciclado.nombre}</Text>
-              <Image source={icon} style={{ width: 24, height: 24, resizeMode: "contain" }} />
-              <Text style={styles.materialValue}>{tuMaterialMasReciclado.valor} g</Text>
+              <TablaMaterial datos={materiaIcon} unidad="g" />
             </View>
           )}
 

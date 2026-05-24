@@ -286,7 +286,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       // Preservar el token del usuario actual
       const updatedUser: User = {
         ...userData,
-        token: user?.token
+        token: result.token || user.token,
       };
       
       setUser(updatedUser);
