@@ -1,10 +1,11 @@
 import { Linking, Platform, View, TouchableOpacity, Image, Modal, Text, StyleSheet } from "react-native";
 import { Stack, Tabs } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { useRouter, usePathname } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import HeaderLogo from "@/components/HeaderLogo";
 
 const EMAIL_COLABORAR = "verdeando.dodogames@gmail.com";
 const ALIAS_DONACION = "verdeando.donar"; // Reemplazar por el alias real si aplica
@@ -15,46 +16,32 @@ export default function TabLayout() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [colaborarModalVisible, setColaborarModalVisible] = useState(false);
   const { logout, user } = useUser();
-  const pathname = usePathname();
-  const renderHeaderLeft = () => { 
-    return (
-      pathname === "/" ? (
-        null
-      ) : (
-        <View>
-        <TouchableOpacity 
-          onPress={() => router.back()}
-          style={{ marginLeft: 16, marginRight: 5 }}
-        >
-          <FontAwesome6 name="arrow-left" size={20} color="green" />
-          
-        </TouchableOpacity>
-        </View>
-      )
-    );
-  }
+
+  const renderHeaderLeft = () => (
+    <View style={styles.headerLeft}>
+      <HeaderLogo />
+    </View>
+  );
 
   const renderHeaderRight = () => (
     <View style={styles.headerRight}>
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => setColaborarModalVisible(true)}
         style={styles.colaborarButton}
         activeOpacity={0.85}
       >
         <View style={styles.colaborarButtonShine} />
-        <Text style={styles.colaborarButtonText}>Colaborá con Nosotros!</Text>
+        <Text style={styles.colaborarButtonText} numberOfLines={1}>
+          Colaborá con Nosotros!
+        </Text>
       </TouchableOpacity>
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => setMenuVisible(true)}
-        style={{ marginLeft: 4 }}
+        style={styles.profileButton}
       >
         <Image
-          source={user?.fotoPerfil ? { uri: user.fotoPerfil } : require('../../assets/images/perfil.png')} 
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-          }}
+          source={user?.fotoPerfil ? { uri: user.fotoPerfil } : require("../../assets/images/perfil.png")}
+          style={styles.profileImage}
         />
       </TouchableOpacity>
     </View>
@@ -84,13 +71,25 @@ export default function TabLayout() {
           tabBarActiveBackgroundColor: "lightgreen",
           headerLeft: renderHeaderLeft,
           headerRight: renderHeaderRight,
-          headerStyle: {
-            
-            height: 90,
+          headerTitle: "",
+          headerTitleAlign: "left",
+          headerLeftContainerStyle: {
+            paddingLeft: 12,
+            minWidth: 0,
+            flex: 0,
           },
-          headerTitleStyle: {
-            color: 'green',
-            fontWeight: 'bold',
+          headerRightContainerStyle: {
+            paddingRight: 8,
+            minWidth: 0,
+          },
+          headerTitleContainerStyle: {
+            flex: 0,
+            width: 0,
+            margin: 0,
+            padding: 0,
+          },
+          headerStyle: {
+            height: 90,
           },
           tabBarLabelStyle:{
             fontSize: 7.9,
@@ -117,48 +116,43 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "Home",
+            tabBarLabel: "Home",
             tabBarIcon: ({ color }) => <FontAwesome6 name="house" size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="puntosverdes"
           options={{
-            title: "Puntos Verdes",
-            tabBarIcon: ({ color }) => <FontAwesome6 name="location-dot" size={24} color={color} />,
             tabBarLabel: "Puntos Verdes",
+            tabBarIcon: ({ color }) => <FontAwesome6 name="location-dot" size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="intercambios"
           options={{
-            title: "Intercambios",
-            tabBarIcon: ({ color }) => <FontAwesome6 name="arrows-rotate" size={24} color={color} />,
             tabBarLabel: "Intercambios",
+            tabBarIcon: ({ color }) => <FontAwesome6 name="arrows-rotate" size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="cuponera"
           options={{
-            title: "Cuponera",
-            tabBarIcon: ({ color }) => <FontAwesome6 name="tag" size={24} color={color} />,
             tabBarLabel: "Cuponera",
+            tabBarIcon: ({ color }) => <FontAwesome6 name="tag" size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="comunidad"
           options={{
-            title: "Comunidad",
-            tabBarIcon: ({ color }) => <FontAwesome6 name="user-group" size={24} color={color} />,
             tabBarLabel: "Comunidad",
+            tabBarIcon: ({ color }) => <FontAwesome6 name="user-group" size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="leaderboards"
           options={{
-            title: "Ranking",
-            tabBarIcon: ({ color }) => <FontAwesome6 name="trophy" size={24} color={color} />,
             tabBarLabel: "Ranking",
+            tabBarIcon: ({ color }) => <FontAwesome6 name="trophy" size={24} color={color} />,
           }}
         />
       </Tabs>
@@ -292,25 +286,42 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
   },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 1,
+    minWidth: 0,
+  },
   headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 0,
+  },
+  profileButton: {
+    flexShrink: 0,
+  },
+  profileImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   colaborarButton: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: '#D4AF37',
+    backgroundColor: "#D4AF37",
     borderRadius: 10,
-    overflow: 'hidden',
-    position: 'relative',
+    overflow: "hidden",
+    position: "relative",
     borderWidth: 1,
-    borderColor: 'rgba(255, 220, 100, 0.6)',
-    shadowColor: '#B8860B',
+    borderColor: "rgba(255, 220, 100, 0.6)",
+    shadowColor: "#B8860B",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 6,
     elevation: 6,
+    flexShrink: 0,
+    alignSelf: "center",
   },
   colaborarButtonShine: {
     position: 'absolute',
@@ -323,10 +334,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 10,
   },
   colaborarButtonText: {
-    color: '#3d2c0d',
-    fontSize: 12,
-    fontWeight: '700',
-    textShadowColor: 'rgba(255, 255, 255, 0.5)',
+    color: "#3d2c0d",
+    fontSize: 11,
+    lineHeight: 13,
+    fontWeight: "700",
+    textShadowColor: "rgba(255, 255, 255, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
   },

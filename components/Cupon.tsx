@@ -1,164 +1,421 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, Modal } from "react-native";
-import { Colors } from "../constants/Colors";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  ScrollView,
+} from "react-native";
+import { FontAwesome6 } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Recompensa, useRecompensas } from "@/contexts/RecompensaContext";
 import { useState } from "react";
 
+function obtenerDisponibilidadStyle(cantidad?: number) {
+  if ((cantidad ?? 0) > 0) {
+    return { bg: "#E8F5EE", color: "#2C7865", label: "Disponible" };
+  }
+  return { bg: "#FDECEA", color: "#B3261E", label: "Agotado" };
+}
 
-export default function Cupon({ recompensa }: { recompensa: Recompensa }) {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const { canjearRecompensa } = useRecompensas();
+function InfoRow({
+  icon,
+  label,
+  value,
+  highlight = false,
+}: {
+  icon: React.ComponentProps<typeof FontAwesome6>["name"];
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
-    <View style={styles.cupon}>      
-      <View style={styles.contenido}>
-        <Image source={{ uri: recompensa.foto }} style={styles.imagen} resizeMode="contain" />
-        
-        <View style={styles.info}>
-          <Text style={styles.nombre}>{recompensa.titulo}</Text>
-          <Text style={styles.precio}>{recompensa.puntos}</Text>
-        </View>
-        
-        <TouchableOpacity style={styles.botonCanjear} onPress={() => setIsModalVisible(true)}>
-          <Text style={styles.textoBoton}>Canjear</Text>
-        </TouchableOpacity>
+    <View style={styles.infoRow}>
+      <View style={styles.infoRowLeft}>
+        <FontAwesome6 name={icon} size={14} color="#2C7865" />
+        <Text style={styles.infoLabel}>{label}</Text>
       </View>
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.nombre}>{recompensa.titulo}</Text>
-            <Image source={{ uri: recompensa.foto }} style={styles.modalImage} resizeMode="contain" />
-            <Text style={styles.descripcion}>{recompensa.descripcion}</Text>
-            <Text style={styles.precio}>Puntos requeridos: {recompensa.puntos}</Text>
-            <Text style={styles.cantidad}>Cantidad disponible: {recompensa.cantidad}</Text>
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.botonCanjearModal} onPress={() => {setIsModalVisible(false); canjearRecompensa(recompensa.id || "")  }}>
-                <Text style={styles.textoBoton}>Canjear</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <Text style={[styles.infoValue, highlight && styles.infoValueHighlight]} numberOfLines={2}>
+        {value}
+      </Text>
     </View>
   );
 }
 
+export default function Cupon({ recompensa }: { recompensa: Recompensa }) {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { canjearRecompensa } = useRecompensas();
+  const disponibilidad = obtenerDisponibilidadStyle(recompensa.cantidad);
+  const agotado = (recompensa.cantidad ?? 0) <= 0;
+
+  const handleCanjear = () => {
+    setIsModalVisible(false);
+    canjearRecompensa(recompensa.id || "");
+  };
+
+  return (
+    <>
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => setIsModalVisible(true)}
+      >
+        <View style={styles.cardHeader}>
+          <View style={[styles.estadoBadge, { backgroundColor: disponibilidad.bg }]}>
+            <Text style={[styles.estadoText, { color: disponibilidad.color }]}>
+              {disponibilidad.label}
+            </Text>
+          </View>
+          <Text style={styles.stockText}>
+            Stock: {recompensa.cantidad ?? 0}
+          </Text>
+        </View>
+
+        <View style={styles.cardBody}>
+          <View style={styles.imageBox}>
+            {recompensa.foto ? (
+              <Image source={{ uri: recompensa.foto }} style={styles.imagen} resizeMode="contain" />
+            ) : (
+              <FontAwesome6 name="gift" size={28} color="#2C7865" />
+            )}
+          </View>
+
+          <View style={styles.cardInfo}>
+            <Text style={styles.nombre} numberOfLines={2}>
+              {recompensa.titulo}
+            </Text>
+
+            <View style={styles.statsRow}>
+              <View style={styles.statPill}>
+                <FontAwesome6 name="star" size={12} color="#FFD700" />
+                <Text style={styles.statText}>{recompensa.puntos ?? 0} pts</Text>
+              </View>
+              <View style={styles.statPill}>
+                <FontAwesome6 name="boxes-stacked" size={12} color="#2C7865" />
+                <Text style={styles.statText}>{recompensa.cantidad ?? 0} disp.</Text>
+              </View>
+            </View>
+
+            <Text style={styles.verDetalle}>Ver detalle</Text>
+          </View>
+        </View>
+      </Pressable>
+
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <LinearGradient
+              colors={["#2C7865", "#1E5248"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.modalHeader}
+            >
+              <Text style={styles.modalTitle} numberOfLines={2}>
+                {recompensa.titulo}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setIsModalVisible(false)}
+                style={styles.modalCloseButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <FontAwesome6 name="xmark" size={18} color="#fff" />
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+              <View style={[styles.estadoBadgeLarge, { backgroundColor: disponibilidad.bg }]}>
+                <Text style={[styles.estadoTextLarge, { color: disponibilidad.color }]}>
+                  {disponibilidad.label}
+                </Text>
+              </View>
+
+              <View style={styles.imageCard}>
+                {recompensa.foto ? (
+                  <Image source={{ uri: recompensa.foto }} style={styles.modalImage} resizeMode="contain" />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <FontAwesome6 name="gift" size={48} color="#2C7865" />
+                  </View>
+                )}
+              </View>
+
+              {recompensa.descripcion ? (
+                <Text style={styles.descripcion}>{recompensa.descripcion}</Text>
+              ) : null}
+
+              <View style={styles.infoCard}>
+                <InfoRow
+                  icon="star"
+                  label="Puntos requeridos"
+                  value={`${recompensa.puntos ?? 0} pts`}
+                  highlight
+                />
+                <InfoRow
+                  icon="boxes-stacked"
+                  label="Cantidad disponible"
+                  value={String(recompensa.cantidad ?? 0)}
+                />
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.modalFooterButton, agotado && styles.modalFooterButtonDisabled]}
+              onPress={handleCanjear}
+              disabled={agotado}
+            >
+              <Text style={styles.modalFooterButtonText}>
+                {agotado ? "Sin stock" : "Canjear recompensa"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
-  cupon: {
-    backgroundColor: "white",
-    borderRadius: 15,
-    margin: 15,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    marginHorizontal: 4,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    shadowColor: "#1E5248",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
     overflow: "hidden",
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 10,
+  cardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }],
   },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-  },
-  puntoCorte: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#f0f0f0",
-    borderWidth: 2,
-    borderColor: "#ddd",
-  },
-  contenido: {
+  cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 15,
-    backgroundColor: "white",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#F0FAF7",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8F2EE",
+  },
+  estadoBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  estadoText: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  stockText: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "600",
+  },
+  cardBody: {
+    flexDirection: "row",
+    padding: 14,
+    gap: 12,
+  },
+  imageBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    backgroundColor: "#FAFFFE",
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   imagen: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 15,
+    width: 64,
+    height: 64,
   },
-  info: {
+  cardInfo: {
     flex: 1,
+    gap: 8,
   },
   nombre: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "800",
     color: "#333",
-    marginBottom: 5,
+    lineHeight: 20,
   },
-  precio: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: Colors.light.tint,
+  statsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
-  botonCanjear: {
-    backgroundColor: Colors.light.tint,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginLeft: 10,
-  },
-  textoBoton: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
+  statPill: {
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    gap: 6,
+    backgroundColor: "#FAFFFE",
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  modalContent: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 15,
-    width: "90%",
-    alignItems: "stretch",
+  statText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2C7865",
+  },
+  verDetalle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2C7865",
+    marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    backgroundColor: "#FAFFFE",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "92%",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#fff",
+    flex: 1,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalScroll: {
+    flexGrow: 0,
+  },
+  modalScrollContent: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  estadoBadgeLarge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginBottom: 16,
+  },
+  estadoTextLarge: {
+    fontSize: 13,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  imageCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    alignItems: "center",
+    paddingVertical: 16,
+    marginBottom: 16,
   },
   modalImage: {
     width: "100%",
     height: 180,
-    borderRadius: 8,
-    marginVertical: 12,
   },
-  modalActions: {
-    width: "100%",
-    marginTop: 20,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  botonCanjearModal: {
-    backgroundColor: Colors.light.tint,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 120,
+  imagePlaceholder: {
+    height: 180,
     alignItems: "center",
+    justifyContent: "center",
   },
   descripcion: {
     fontSize: 14,
-    color: "#333",
+    color: "#555",
+    lineHeight: 20,
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
-  cantidad: {
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    paddingHorizontal: 14,
+    overflow: "hidden",
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEF6F3",
+    gap: 12,
+  },
+  infoRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  infoLabel: {
     fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "700",
     color: "#333",
+    textAlign: "right",
+    flexShrink: 1,
+    maxWidth: "50%",
+  },
+  infoValueHighlight: {
+    color: "#2C7865",
+    fontSize: 15,
+  },
+  modalFooterButton: {
+    backgroundColor: "#2C7865",
+    marginHorizontal: 16,
+    marginBottom: 24,
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  modalFooterButtonDisabled: {
+    backgroundColor: "#A8C5BC",
+  },
+  modalFooterButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
-

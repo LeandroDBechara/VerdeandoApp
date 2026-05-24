@@ -144,11 +144,11 @@ export default function Intercambios() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#EEF6F3",
   },
   scrollView: {
-    padding: 10,
-    marginBottom: 50,
+    padding: 12,
+    paddingBottom: 80,
   },
   addButton: {
     position: "absolute",
@@ -223,11 +223,17 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   noDataText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#666",
     textAlign: "center",
-    flexWrap: "wrap",
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
   },
   modalCodigoButton: {
     backgroundColor: "lightgreen",

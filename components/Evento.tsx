@@ -7,13 +7,11 @@ import {
   Modal,
   ScrollView,
   Pressable,
-  Dimensions,
 } from "react-native";
-
-const MODAL_MAX_HEIGHT = Dimensions.get("window").height * 0.85;
 import { Evento as EventoType } from "@/contexts/EventoContext";
 import { PuntoVerde, usePuntoVerde } from "@/contexts/PuntoVerdeContext";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
 
 type PuntoVerdeRef = string | { id?: string; nombre?: string };
@@ -40,17 +38,37 @@ function obtenerNombrePuntoVerde(item: PuntoVerdeRef, puntosVerdes: PuntoVerde[]
 }
 
 const formatearFechaEuropea = (fecha: Date | string | undefined): string => {
-  if (!fecha) return "Fecha no disponible";
+  if (!fecha) return "—";
 
   const fechaObj = new Date(fecha);
-  if (isNaN(fechaObj.getTime())) return "Fecha inválida";
+  if (isNaN(fechaObj.getTime())) return "—";
 
-  const dia = fechaObj.getDate().toString().padStart(2, "0");
-  const mes = (fechaObj.getMonth() + 1).toString().padStart(2, "0");
-  const año = fechaObj.getFullYear();
-
-  return `${dia}/${mes}/${año}`;
+  return fechaObj.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
 };
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  highlight = false,
+}: {
+  icon: React.ComponentProps<typeof FontAwesome6>["name"];
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <View style={styles.infoRowLeft}>
+        <FontAwesome6 name={icon} size={14} color="#2C7865" />
+        <Text style={styles.infoLabel}>{label}</Text>
+      </View>
+      <Text style={[styles.infoValue, highlight && styles.infoValueHighlight]} numberOfLines={3}>
+        {value}
+      </Text>
+    </View>
+  );
+}
 
 export default function Evento({ evento }: { evento: EventoType }) {
   const { titulo, descripcion, imagen, fechaInicio, fechaFin, codigo, puntosVerdesPermitidos } = evento;
@@ -85,280 +103,394 @@ export default function Evento({ evento }: { evento: EventoType }) {
   }, [puntosVerdesPermitidos, puntosVerdes]);
 
   return (
-    <View style={{ marginBottom: 10 }}>
-      <TouchableOpacity onPress={() => setModalVisible(true)} activeOpacity={0.9}>
-        <View style={styles.container}>
-          <Image source={{ uri: imagen }} style={styles.image} resizeMode="contain" />
-          <View style={styles.infoContainer}>
-            <Text style={styles.title}>{titulo}</Text>
+    <>
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => setModalVisible(true)}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.estadoBadge}>
+            <Text style={styles.estadoText}>Evento</Text>
           </View>
+          <Text style={styles.fechaText}>
+            {fechaInicioFormateada} — {fechaFinFormateada}
+          </Text>
         </View>
-      </TouchableOpacity>
+
+        {imagen ? (
+          <Image source={{ uri: imagen }} style={styles.cardImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.cardImagePlaceholder}>
+            <FontAwesome6 name="calendar-days" size={32} color="#2C7865" />
+          </View>
+        )}
+
+        <View style={styles.cardBody}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {titulo}
+          </Text>
+          {descripcion ? (
+            <Text style={styles.cardDescription} numberOfLines={2}>
+              {descripcion}
+            </Text>
+          ) : null}
+          <Text style={styles.verDetalle}>Ver detalle</Text>
+        </View>
+      </Pressable>
 
       <Modal
         visible={modalVisible}
+        animationType="slide"
         transparent
-        animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setModalVisible(false)}
-          />
-          <View style={styles.modalCard}>
-            <ScrollView
-              style={styles.modalScroll}
-              showsVerticalScrollIndicator
-              bounces
-              nestedScrollEnabled
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.modalScrollContent}
+          <View style={styles.modalSheet}>
+            <LinearGradient
+              colors={["#2C7865", "#1E5248"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.modalHeader}
             >
-              <Image source={{ uri: imagen }} style={styles.modalImage} resizeMode="contain" />
+              <Text style={styles.modalTitle} numberOfLines={2}>
+                {titulo}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.modalCloseButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <FontAwesome6 name="xmark" size={18} color="#fff" />
+              </TouchableOpacity>
+            </LinearGradient>
 
-              <Text style={styles.modalTitle}>{titulo}</Text>
-
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Detalles del evento</Text>
-                <View style={styles.descriptionBox}>
-                  <Text style={styles.modalDescription}>{descripcion}</Text>
-                </View>
+            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+              <View style={styles.estadoBadgeLarge}>
+                <Text style={styles.estadoTextLarge}>Evento activo</Text>
               </View>
 
-              <View style={styles.infoRow}>
-                <View style={styles.infoIconWrap}>
-                  <FontAwesome6 name="calendar-days" size={18} color="#2C7865" />
-                </View>
-                <View style={styles.infoTextWrap}>
-                  <Text style={styles.infoLabel}>Duración</Text>
-                  <Text style={styles.infoValue}>
-                    {fechaInicioFormateada} — {fechaFinFormateada}
-                  </Text>
-                </View>
+              <View style={styles.imageCard}>
+                {imagen ? (
+                  <Image source={{ uri: imagen }} style={styles.modalImage} resizeMode="contain" />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <FontAwesome6 name="calendar-days" size={48} color="#2C7865" />
+                  </View>
+                )}
               </View>
 
-              {codigo ? (
-                <View style={styles.infoRow}>
-                  <View style={styles.infoIconWrap}>
-                    <FontAwesome6 name="ticket" size={18} color="#2C7865" />
-                  </View>
-                  <View style={styles.infoTextWrap}>
-                    <Text style={styles.infoLabel}>Código del evento</Text>
-                    <Text style={styles.codigoValue}>{codigo}</Text>
-                  </View>
-                </View>
+              {descripcion ? (
+                <Text style={styles.descripcion}>{descripcion}</Text>
               ) : null}
 
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Puntos verdes habilitados</Text>
+              <View style={styles.infoCard}>
+                <InfoRow
+                  icon="calendar"
+                  label="Fecha inicio"
+                  value={fechaInicioFormateada}
+                />
+                <InfoRow
+                  icon="calendar-check"
+                  label="Fecha fin"
+                  value={fechaFinFormateada}
+                />
+                {codigo ? (
+                  <InfoRow icon="ticket" label="Codigo del evento" value={codigo} highlight />
+                ) : null}
+              </View>
+
+              <Text style={styles.sectionTitle}>Puntos verdes habilitados</Text>
+              <View style={styles.pvCard}>
                 {nombresPuntosVerdes.length > 0 ? (
-                  <View style={styles.pvList}>
-                    {nombresPuntosVerdes.map(({ key, nombre }) => (
-                      <View key={key} style={styles.pvListItem}>
-                        <FontAwesome6 name="leaf" size={14} color="#2C7865" />
-                        <Text style={styles.pvListItemText}>{nombre}</Text>
+                  nombresPuntosVerdes.map(({ key, nombre }) => (
+                    <View key={key} style={styles.pvRow}>
+                      <View style={styles.pvRowLeft}>
+                        <FontAwesome6 name="location-dot" size={14} color="#2C7865" />
+                        <Text style={styles.pvRowName}>{nombre}</Text>
                       </View>
-                    ))}
-                  </View>
+                    </View>
+                  ))
                 ) : (
                   <Text style={styles.pvEmptyText}>
                     No se encontraron puntos verdes habilitados para este evento
                   </Text>
                 )}
               </View>
-
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setModalVisible(false)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.modalCloseButtonText}>Cerrar</Text>
-              </TouchableOpacity>
             </ScrollView>
+
+            <TouchableOpacity style={styles.modalFooterButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.modalFooterButtonText}>Cerrar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "column",
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    marginHorizontal: 4,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    shadowColor: "#1E5248",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    overflow: "hidden",
+  },
+  cardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }],
+  },
+  cardHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 10,
-    margin: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#F0FAF7",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8F2EE",
+    gap: 8,
   },
-  image: {
+  estadoBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: "#E8F5EE",
+  },
+  estadoText: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+    color: "#2C7865",
+  },
+  fechaText: {
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "600",
+    flexShrink: 1,
+    textAlign: "right",
+  },
+  cardImage: {
     width: "100%",
-    height: 160,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    backgroundColor: "#f5f5f5",
+    height: 140,
+    backgroundColor: "#F0FAF7",
   },
-  title: {
+  cardImagePlaceholder: {
+    width: "100%",
+    height: 140,
+    backgroundColor: "#EEF6F3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardBody: {
+    padding: 14,
+    gap: 6,
+  },
+  cardTitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
-    marginTop: 10,
-    color: "black",
+    fontWeight: "800",
+    color: "#333",
+    lineHeight: 22,
   },
-  infoContainer: {
-    backgroundColor: "white",
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    width: "100%",
+  cardDescription: {
+    fontSize: 13,
+    color: "#666",
+    lineHeight: 18,
+  },
+  verDetalle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2C7865",
+    marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
   },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    width: "100%",
-    maxWidth: 400,
-    maxHeight: MODAL_MAX_HEIGHT,
+  modalSheet: {
+    backgroundColor: "#FAFFFE",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "92%",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 1,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#fff",
+    flex: 1,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalScroll: {
-    maxHeight: MODAL_MAX_HEIGHT,
+    flexGrow: 0,
   },
   modalScrollContent: {
-    padding: 20,
-    paddingBottom: 24,
+    padding: 16,
+    paddingBottom: 8,
+  },
+  estadoBadgeLarge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginBottom: 16,
+    backgroundColor: "#E8F5EE",
+  },
+  estadoTextLarge: {
+    fontSize: 13,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    color: "#2C7865",
+  },
+  imageCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    alignItems: "center",
+    paddingVertical: 16,
+    marginBottom: 16,
+    overflow: "hidden",
   },
   modalImage: {
     width: "100%",
     height: 180,
-    borderRadius: 12,
-    backgroundColor: "#f5f5f5",
-    marginBottom: 16,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#2C7865",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  section: {
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#2C7865",
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  descriptionBox: {
-    backgroundColor: "#f0f7f4",
-    borderRadius: 10,
-    padding: 14,
-    borderLeftWidth: 4,
-    borderLeftColor: "#2C7865",
-  },
-  modalDescription: {
-    fontSize: 15,
-    color: "#333",
-    lineHeight: 22,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 16,
-    gap: 12,
-  },
-  infoIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#e8f5e9",
+  imagePlaceholder: {
+    height: 180,
     alignItems: "center",
     justifyContent: "center",
   },
-  infoTextWrap: {
+  descripcion: {
+    fontSize: 14,
+    color: "#555",
+    lineHeight: 20,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D4E8E0",
+    paddingHorizontal: 14,
+    marginBottom: 16,
+    overflow: "hidden",
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEF6F3",
+    gap: 12,
+  },
+  infoRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     flex: 1,
   },
   infoLabel: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 14,
     color: "#666",
-    marginBottom: 4,
+    fontWeight: "500",
   },
   infoValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
-    lineHeight: 20,
-  },
-  codigoValue: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "700",
+    color: "#333",
+    textAlign: "right",
+    flexShrink: 1,
+    maxWidth: "55%",
+  },
+  infoValueHighlight: {
     color: "#2C7865",
-    letterSpacing: 1,
+    fontSize: 15,
+    letterSpacing: 0.5,
   },
-  pvList: {
-    backgroundColor: "#f0f7f4",
-    borderRadius: 10,
-    padding: 12,
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#2C7865",
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  pvCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#c8e6c9",
-    gap: 10,
+    borderColor: "#D4E8E0",
+    overflow: "hidden",
+    marginBottom: 8,
+    padding: 4,
   },
-  pvListItem: {
+  pvRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEF6F3",
+  },
+  pvRowLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-  },
-  pvListItemText: {
     flex: 1,
-    fontSize: 15,
+  },
+  pvRowName: {
+    fontSize: 14,
     fontWeight: "600",
-    color: "#2C7865",
+    color: "#333",
+    flex: 1,
   },
   pvEmptyText: {
     fontSize: 14,
     color: "#666",
     fontStyle: "italic",
     lineHeight: 20,
-    paddingHorizontal: 4,
+    padding: 14,
   },
-  modalCloseButton: {
+  modalFooterButton: {
     backgroundColor: "#2C7865",
+    marginHorizontal: 16,
+    marginBottom: 24,
     marginTop: 8,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
   },
-  modalCloseButtonText: {
+  modalFooterButtonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });
